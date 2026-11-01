@@ -1,9 +1,10 @@
 # GitHub administration and preservation
 
 Repository: `mohamedeghboudj/clinic-management-system`, public, default branch main.
-Initial inspection found main unprotected and no rulesets. M3 `SamirKor` and M5
-`ayyoubbouchama` both have write access. M2/M4 have not joined; their review and
-testing duties stay pending, not silently reassigned.
+Initial inspection found main unprotected and no rulesets; the policy below is
+now applied. Verified write access: M2 `ahmed-ammiche`, M3 `SamirKor`,
+M4 `MohamedAmine-dash`, M5 `ayyoubbouchama`. M2 independently tests M1; M3/M4
+are the assigned reviewers. Having access is not evidence of completed acceptance.
 
 The original Telegram notification blob is preserved:
 `b81663a6e5b4611129f05367b7da406867fb4c06`. Its original filename, contents and
@@ -41,7 +42,7 @@ it. A checked-in settings file by itself does not configure GitHub.
 
 Do not enable a global SHA-only Actions restriction that breaks the preserved
 Telegram action at `@master`; any change to that user-owned workflow is separate.
-Do not weaken approvals because M2/M4 are absent. No PR auto-approval, auto-merge,
+Do not weaken approvals while independent tests or reviews are pending. No PR auto-approval, auto-merge,
 direct main push, visibility change or release deployment is included.
 
 References: [protected-branch API](https://docs.github.com/en/rest/branches/branch-protection),

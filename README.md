@@ -70,8 +70,9 @@ the public M1 signatures in [the contract index](docs/contracts/foundation.md).
 ## GitHub workflow
 
 Use short-lived `feature/w1-foundation-*` branches and PRs into `main`. Two
-assigned human approvals and independent testing remain mandatory. M3 is
-`@SamirKor`; M5 is `@ayyoubbouchama`; M2/M4 usernames are pending. Never substitute
+assigned human approvals and independent testing remain mandatory. M2 is
+`@ahmed-ammiche`, M3 `@SamirKor`, M4 `@MohamedAmine-dash` and M5
+`@ayyoubbouchama`; all have verified write access. Never substitute
 the author, a bot or a fabricated reviewer for a missing teammate.
 
 Your original `.github/workflows/telegram-notif.yml` is preserved byte-for-byte.

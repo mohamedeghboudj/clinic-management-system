@@ -15,10 +15,11 @@ and external acceptance; it must not be read as independent approval.
 
 ## Mandatory external dependencies
 
-- M2 has not joined: independent tests for M1 are pending. M1's committed tests
-  are author verification only, as explicitly permitted.
-- M4 has not joined: second assigned human review is pending. M3 is SamirKor;
-  never use an author/bot approval to replace either assigned review.
+- M2 is @ahmed-ammiche with verified write access; independent tests for M1
+  remain pending. M1's committed tests are author verification only.
+- Assigned reviewers are M3 @SamirKor and M4 @MohamedAmine-dash, both with
+  verified write access. Their final approvals remain required; never use an
+  author/bot approval to replace either assigned review.
 - M2–M5 models are not present: the full clinic workflow demo cannot yet run.
   `--foundation-only` exercises actual implemented transaction contracts; default
   invocation reports pending integration instead of fake success.
@@ -87,3 +88,11 @@ No Telegram secret, topic or user-owned workflow was changed.
 - [Retry adapter design #2](https://github.com/mohamedeghboudj/clinic-management-system/issues/2)
 - [Desktop preference design #3](https://github.com/mohamedeghboudj/clinic-management-system/issues/3)
 - [Full demo, M5 verification and M3/M4 reviews #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4)
+
+## Confirmed GitHub assignments — 1 November
+
+M2 @ahmed-ammiche and M4 @MohamedAmine-dash have verified write access.
+PRs #5–#7 assign M1 implementation and M2 independent testing; review
+requests name M3 @SamirKor and M4 @MohamedAmine-dash while PRs stay draft.
+Issue #1 assigns M1/M2/M3/M4; #2–#4 assign M1 coordination. These
+assignments do not establish completed tests, approvals or merges.
