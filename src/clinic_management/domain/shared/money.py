@@ -4,12 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from decimal import (
+    ROUND_HALF_UP,
+    Decimal,
+    DecimalException,
+    InvalidOperation,
+    localcontext,
+)
 
 from clinic_management.domain.shared.errors import ValidationError
 
 SUPPORTED_CURRENCIES: frozenset[str] = frozenset({"DZD"})
 CURRENCY_QUANTUM: Decimal = Decimal("0.01")
+QUANTIZE_PRECISION: int = 28
 
 
 def _require_currency(currency: str) -> str:
@@ -58,12 +65,14 @@ def quantize_amount(value: Decimal, currency: str) -> Decimal:
         Quantized Decimal with two fractional digits using ROUND_HALF_UP.
 
     Raises:
-        ValidationError: If the amount is non-finite or currency is unsupported.
+        ValidationError: If the amount is non-finite, out of bounds, or currency is unsupported.
     """
     _require_currency(currency)
     clean = _require_decimal(value, "money.amount.invalid")
     try:
-        rounded = clean.quantize(CURRENCY_QUANTUM, rounding=ROUND_HALF_UP)
+        with localcontext() as ctx:
+            ctx.prec = QUANTIZE_PRECISION
+            rounded = clean.quantize(CURRENCY_QUANTUM, rounding=ROUND_HALF_UP)
     except InvalidOperation as exc:
         raise ValidationError(code="INVALID_VALUE", message_key="money.amount.invalid") from exc
     return Decimal("0.00") if rounded == Decimal("-0.00") else rounded
@@ -112,7 +121,10 @@ class Money:
             ValidationError: If currencies do not match.
         """
         self._require_same_currency(other)
-        return Money(amount=self.amount + other.amount, currency=self.currency)
+        with localcontext() as ctx:
+            ctx.prec = QUANTIZE_PRECISION + 2
+            total = self.amount + other.amount
+        return Money(amount=total, currency=self.currency)
 
     def subtract(self, other: Money) -> Money:
         """Return the difference of two same-currency monetary amounts.
@@ -127,10 +139,16 @@ class Money:
             ValidationError: If currencies do not match.
         """
         self._require_same_currency(other)
-        return Money(amount=self.amount - other.amount, currency=self.currency)
+        with localcontext() as ctx:
+            ctx.prec = QUANTIZE_PRECISION + 2
+            difference = self.amount - other.amount
+        return Money(amount=difference, currency=self.currency)
 
     def multiply(self, quantity: Decimal) -> Money:
         """Multiply this monetary amount by a finite decimal quantity.
+
+        Computes the exact intermediate product independent of caller Decimal
+        context precision, then quantizes once using the currency rounding policy.
 
         Args:
             quantity: Finite decimal factor to multiply by.
@@ -139,11 +157,24 @@ class Money:
             New quantized Money instance.
 
         Raises:
-            ValidationError: If quantity is not a finite Decimal.
+            ValidationError: If quantity is not a finite Decimal or overflows bounds.
         """
         factor = _require_decimal(quantity, "money.quantity.invalid")
+        exact_precision = max(
+            QUANTIZE_PRECISION,
+            len(self.amount.as_tuple().digits) + len(factor.as_tuple().digits) + 2,
+        )
+        try:
+            with localcontext() as ctx:
+                ctx.prec = exact_precision
+                product = self.amount * factor
+        except DecimalException as exc:
+            raise ValidationError(
+                code="INVALID_VALUE",
+                message_key="money.quantity.invalid",
+            ) from exc
         return Money(
-            amount=quantize_amount(self.amount * factor, self.currency),
+            amount=quantize_amount(product, self.currency),
             currency=self.currency,
         )
 
