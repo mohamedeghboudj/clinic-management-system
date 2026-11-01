@@ -23,13 +23,30 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Signature:** `RecordPayment.execute(self, command: RecordPaymentCommand, principal: Principal) -> PaymentReceipt`
 - **Command DTO (`RecordPaymentCommand`):** `clinic_id: UUID`, `invoice_id: UUID`, `amount: Money`, `method: PaymentMethod`, `idempotency_key: UUID`, `external_reference: str | None`, `correlation_id: UUID`.
 - **Receipt DTO (`PaymentReceipt`):** `payment_id: UUID`, `invoice_id: UUID`, `net_paid: Money`, `outstanding: Money`, `settlement: SettlementStatus`, `received_at: datetime`.
-- **Transaction, Concurrency & Idempotency:**
-  1. Authorize `principal` via `AccessPolicy.require(principal, Permission.PAYMENT_RECORD, resource_context)`.
-  2. Enter `UnitOfWork`. Check the command idempotency ledger keyed by `(clinic_id, principal.account_id, "PAYMENT_RECORD", command.idempotency_key)`.
-  3. If the key exists with an identical SHA-256 payload hash, return the stored `PaymentReceipt` without inserting a duplicate payment. If the key exists with a different payload hash, raise `ConflictError(code="IDEMPOTENCY_KEY_REUSED", message_key="payment.idempotency.conflict")`.
-  4. Call `InvoiceRepository.get_for_update(clinic_id, invoice_id)` to acquire a PostgreSQL row-level `FOR UPDATE` lock. Raise `NotFoundError` if absent.
-  5. Load existing payments and reversals via `PaymentRepository`, execute `validate_payment(invoice, command.amount, payments, reversals)`, construct `Payment`, stage `AuditEntry` and `DomainEvent(event_type="PAYMENT_RECORDED", ...)`, persist the idempotency command record, and commit atomically.
-- **Unknown Outcome Recovery:** After a network timeout, the desktop client re-submits the exact same `RecordPaymentCommand` (keeping the original `idempotency_key`) or queries command status by key before allowing the cashier to initiate a new payment.
+- **Transaction, Concurrency & Idempotency Protocol:**
+  1. Authorize `principal` via `AccessPolicy.require(principal, Permission.PAYMENT_RECORD, resource_context)`, validating clinic membership and role boundaries.
+  2. Compute canonical `payload_hash = SHA-256(canonical_json(command.clinic_id, command.invoice_id, command.amount.amount, command.amount.currency, command.method, command.external_reference))` to uniquely fingerprint the request body.
+  3. Inside a single PostgreSQL `READ COMMITTED` (or `REPEATABLE READ`) transaction:
+     - Acquire a row-level `FOR UPDATE` lock on the target invoice (`SELECT ... FROM invoices WHERE id = :invoice_id AND clinic_id = :clinic_id FOR UPDATE`).
+     - Attempt atomic command reservation: `INSERT INTO billing_idempotency_ledger (clinic_id, command_scope, idempotency_key, invoice_id, payload_hash, actor_id, status) VALUES (:clinic_id, 'PAYMENT_RECORD', :idempotency_key, :invoice_id, :payload_hash, :actor_id, 'PROCESSING') ON CONFLICT (clinic_id, command_scope, idempotency_key) DO NOTHING`.
+     - **Winner Path (Insert succeeded - 1 row affected):**
+       - Run `validate_payment(invoice, current_net_paid, payment)`.
+       - Insert the new `Payment` record and stage `AuditEntry` and `DomainEvent(event_type="PAYMENT_RECORDED", ...)`.
+       - Update the ledger row with the committed `payment_id`, response snapshot (`PaymentReceipt`), and status `'COMPLETED'`.
+       - Commit transaction atomically.
+     - **Loser / Replay Path (Insert conflicted - 0 rows affected):**
+       - Read the existing ledger row for `(clinic_id, 'PAYMENT_RECORD', idempotency_key)` under the invoice/ledger lock.
+       - Verify `existing.payload_hash == payload_hash`. If the hash differs, raise `ConflictError(code="IDEMPOTENCY_KEY_REUSED", message_key="payment.idempotency.conflict")` and roll back without mutating state.
+       - If the payload matches, return the original committed `PaymentReceipt` snapshot with zero duplicate payment insertions and zero duplicate audit/outbox side effects.
+- **Concurrent 2-Request Timeline (1000 DZD Invoice, Two Concurrent 400 DZD Requests A & B with Key `K1`):**
+  | Step | Request A | Request B: same key and same 400 DZD command |
+  | --- | --- | --- |
+  | 1 | Checks key `K1`; absent. | Checks key `K1` concurrently; absent. |
+  | 2 | Acquires invoice `FOR UPDATE` lock; inserts `K1` into ledger successfully (Winner). | Blocks waiting on invoice `FOR UPDATE` lock. |
+  | 3 | Validates `400 DZD` against `1000 DZD` invoice, inserts payment `P1`, updates ledger with receipt `R1`, commits. | Unblocks, acquires lock, attempts ledger `INSERT` for `K1` (`DO NOTHING` -> 0 rows inserted; Loser). |
+  | 4 | Returns receipt `R1`. | Reads committed ledger row `K1`, verifies matching payload hash, skips duplicate payment insert. |
+  | 5 | Finishes. | Returns original receipt `R1`. Total posted payments remain `400 DZD` (never `800 DZD`). |
+- **Unknown Commit Outcomes & Bounded Replay Recovery:** If a client experiences network timeout or connection drop with an unknown commit outcome, retrying with the same `(clinic_id, idempotency_key)` executes a bounded lookup (max 3 attempts, exponential backoff capped at 2000ms), safely recovering the original receipt or executing once if the initial attempt rolled back.
 
 ### 2.2 `invoice_to_response`
 - **Signature:** `invoice_to_response(invoice: Invoice, balance: BalanceSummary) -> InvoiceSummary`
@@ -55,7 +72,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* 200 DZD credit note on a 1,000 DZD unpaid invoice reduces outstanding balance to 800 DZD.
   - *Invalid:* 1,100 DZD credit note on a 1,000 DZD invoice raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-BILL-01` (Depends on M5 `Invoice` and `BalanceSummary`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-BILL-01` (Assigned to M5 billing team; depends on M5 `Invoice` and `BalanceSummary`).
 
 ### 3.2 `PatientCredit` (`domain/billing/patient_credit.py`)
 - **Purpose:** Track advance deposits or authorized overpayments held on a patient's clinic account prior to invoice allocation. (Sprint 1 rejects excess payments directly until this ledger is enabled.)
@@ -69,7 +86,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* 500 DZD credit with one 200 DZD allocation returns `available_amount == 300.00 DZD`.
   - *Invalid:* Zero or negative credit creation raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-BILL-02` (Depends on M2 `Patient` and M5 `Payment`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-BILL-02` (Assigned to M5 billing team; depends on M2 `Patient` and M5 `Payment`).
 
 ### 3.3 `PaymentAllocation` (`domain/billing/payment_allocation.py`)
 - **Purpose:** Link a portion of a `PatientCredit` to settle debt on a specific `ISSUED` `Invoice`.
@@ -82,7 +99,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Allocating 300 DZD from a 300 DZD credit to an invoice with 600 DZD due leaves 0 DZD credit and 300 DZD invoice debt.
   - *Invalid:* Allocating 400 DZD from a 300 DZD credit raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-BILL-03` (Depends on `PatientCredit` and `Invoice`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-BILL-03` (Assigned to M5 billing team; depends on `PatientCredit` and `Invoice`).
 
 ### 3.4 `ExpenseCategory` (`domain/financial/enums.py`)
 - **Purpose:** Classify operational clinic expenditures using a controlled vocabulary.
@@ -94,7 +111,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* `ExpenseCategory.SUPPLIES`.
   - *Invalid:* `"MARKETING"` rejected by parser.
-- **Future Issue & Dependencies:** `ISSUE-S2-FIN-01`.
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-FIN-01` (Assigned to M5 finance team).
 
 ### 3.5 `Expense` (`domain/financial/expense.py`)
 - **Purpose:** Record non-patient operational costs incurred by the clinic and track when they are paid.
@@ -108,7 +125,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Recording a 50,000 DZD `RENT` expense incurred on `2026-11-01` and marking it paid on `2026-11-05`.
   - *Invalid:* Marking an already paid expense as paid again raises `InvalidTransitionError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-FIN-02` (Depends on `ExpenseCategory`, `Money`, `SupplierInvoice`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-FIN-02` (Assigned to M5 finance team; depends on `ExpenseCategory`, `Money`, `SupplierInvoice`).
 
 ### 3.6 `FinancialSummary` (`domain/financial/summary.py`)
 - **Purpose:** Read-only reporting projection separating billed revenue, cash inflows, cash outflows, and outstanding receivables over a date interval.
@@ -122,7 +139,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* `cash_received = 120,000 DZD`, `cash_paid = 45,000 DZD` yields `net_cash() == 75,000.00 DZD`.
   - *Invalid:* `period_start = 2026-11-30`, `period_end = 2026-11-01` raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-FIN-03` (Depends on `Money`, `Invoice`, `Payment`, `Expense`, `SupplierPayment`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-FIN-03` (Assigned to M5 finance team; depends on `Money`, `Invoice`, `Payment`, `Expense`, `SupplierPayment`).
 
 ### 3.7 `Supplier` (`domain/procurement/supplier.py`)
 - **Purpose:** Represent an external vendor supplying medical consumables or equipment to the clinic.
@@ -136,7 +153,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Active supplier `"PharmAlliance DZ"` with `payment_terms_days=30`.
   - *Invalid:* `payment_terms_days=-5` raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-PROC-01` (Depends on M2 `ContactInfo` and `Address`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-PROC-01` (Assigned to M5 procurement team; depends on M2 `ContactInfo` and `Address`).
 
 ### 3.8 `PurchaseOrderLine` (`domain/procurement/purchase_order.py`)
 - **Purpose:** Immutable line item on a clinic purchase order referencing M3's `Material` catalogue.
@@ -150,7 +167,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* 10 boxes of examination gloves at `850.00 DZD` yields `total() == 8500.00 DZD`.
   - *Invalid:* `quantity = Decimal("0")` raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-PROC-02` (Depends on M3 `Material` and M5 `Money`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-PROC-02` (Assigned to M5 procurement team; depends on M3 `Material` and M5 `Money`).
 
 ### 3.9 `PurchaseOrder` (`domain/procurement/purchase_order.py`)
 - **Purpose:** Track a clinic's formal order of materials from a `Supplier` and derive delivery progress across partial receipts.
@@ -164,7 +181,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Sending a 2-line `DRAFT` order transitions status to `SENT` and sets `ordered_at`.
   - *Invalid:* Cancelling a `PARTIALLY_RECEIVED` order raises `InvalidTransitionError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-PROC-03` (Depends on `Supplier`, `PurchaseOrderLine`, `GoodsReceipt`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-PROC-03` (Assigned to M5 procurement team; depends on `Supplier`, `PurchaseOrderLine`, `GoodsReceipt`).
 
 ### 3.10 `GoodsReceiptLine` (`domain/procurement/goods_receipt.py`)
 - **Purpose:** Record the exact quantity and optional batch/lot of a single material delivered in a shipment.
@@ -177,7 +194,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Receiving `quantity = Decimal("5")` of `material_id` with `lot_id`.
   - *Invalid:* Negative or zero quantity raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-PROC-04` (Depends on M3 `Material` and `StockLot`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-PROC-04` (Assigned to M5 procurement team; depends on M3 `Material` and `StockLot`).
 
 ### 3.11 `GoodsReceipt` (`domain/procurement/goods_receipt.py`)
 - **Purpose:** Verify physical delivery against a `SENT` `PurchaseOrder` and trigger corresponding inventory stock receipt movements.
@@ -191,7 +208,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Two partial receipts of 5 units each against an order of 10 units succeed.
   - *Invalid:* A second receipt of 6 units against a 10-unit order (with 5 already received) raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-PROC-05` (Depends on `PurchaseOrder` and M3 `StockMovement`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-PROC-05` (Assigned to M5 procurement team; depends on `PurchaseOrder` and M3 `StockMovement`).
 
 ### 3.12 `SupplierInvoice` (`domain/procurement/supplier_invoice.py`)
 - **Purpose:** Record a bill issued by a supplier to the clinic and derive the remaining accounts-payable balance.
@@ -205,7 +222,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* 20,000 DZD supplier bill with one 8,000 DZD `SupplierPayment` returns `balance() == 12000.00 DZD`.
   - *Invalid:* Blank `supplier_number` raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-PROC-06` (Depends on `Supplier`, `PurchaseOrder`, `SupplierPayment`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-PROC-06` (Assigned to M5 procurement team; depends on `Supplier`, `PurchaseOrder`, `SupplierPayment`).
 
 ### 3.13 `SupplierPayment` (`domain/procurement/supplier_payment.py`)
 - **Purpose:** Record an immutable cash outflow settling all or part of a `SupplierInvoice`.
@@ -218,7 +235,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Paying 12,000 DZD on a 12,000 DZD remaining supplier invoice balance settles the bill to 0 DZD.
   - *Invalid:* Paying 12,001 DZD raises `ValidationError(code="PAYMENT_EXCEEDS_BALANCE")`.
-- **Future Issue & Dependencies:** `ISSUE-S2-PROC-07` (Depends on `SupplierInvoice` and `Money`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-PROC-07` (Assigned to M5 procurement team; depends on `SupplierInvoice` and `Money`).
 
 ### 3.14 `PricingPolicy` (`application/ports/pricing.py`)
 - **Purpose:** Extension port for future clinic-specific or insurance-tier tax/discount calculation strategies when simple per-line rules are no longer sufficient.
@@ -231,4 +248,14 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 - **Examples:**
   - *Valid:* Standard policy returns quantized `subtotal` plus applicable statutory tax.
   - *Invalid:* Policy returning `USD` for a `DZD` subtotal raises `ValidationError`.
-- **Future Issue & Dependencies:** `ISSUE-S2-BILL-04` (Depends on `Money`).
+- **Future Backlog Item:** Backlog tracking reference `ISSUE-S2-BILL-04` (Assigned to M5 billing team; depends on `Money`).
+
+---
+
+## 4. Future Remote-PostgreSQL Concurrency Test Scenarios (Week 2 Integration)
+
+To be executed against a real remote PostgreSQL database instance during Week 2 integration testing:
+1. **Concurrent Same-Key Same-Payload Test:** Spawn two concurrent asynchronous workers delivering identical `RecordPaymentCommand` with key `K1` and amount `400 DZD` for a `1000 DZD` invoice. Assert exactly 1 payment record is created, exactly 1 audit/outbox entry is appended, and both workers receive identical `PaymentReceipt` snapshots.
+2. **Concurrent Same-Key Mutated-Payload Test:** Spawn two concurrent workers with key `K1`, where Worker A sends `400 DZD` and Worker B sends `500 DZD`. Assert the winner commits successfully and the loser raises `ConflictError(code="IDEMPOTENCY_KEY_REUSED")` without mutating invoice balances.
+3. **Concurrent Distinct-Key Overpayment Test:** Spawn two workers with distinct keys `K1` and `K2`, sending `700 DZD` each concurrently against a `1000 DZD` invoice under `FOR UPDATE` serialization. Assert the winner commits `700 DZD` and the loser's validation correctly observes `300 DZD` remaining balance and raises `ValidationError(code="PAYMENT_EXCEEDS_BALANCE")`.
+4. **Unknown Outcome Retry Test:** Simulate a network partition immediately after a successful commit. Assert a retry with the same idempotency key and payload returns the original committed receipt without re-executing payment side effects.
