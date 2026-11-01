@@ -80,6 +80,11 @@ New workflows use pinned action commits, least-privilege tokens, timeouts and
 clean installs. See [GitHub administration](docs/github-administration.md) for
 the exact policy and the difference between prepared files and active settings.
 
+Active rulesets require PRs into `main`, two approvals, resolved conversations,
+current required GitHub Actions checks and squash merging, with no bypass actors.
+Main deletion and force pushes are blocked; other branches also block force pushes
+while allowing normal author/tester commits and deletion after merge.
+
 ## Continue here
 
 - [Contribution and review rules](CONTRIBUTING.md)

@@ -41,9 +41,9 @@ def load_token() -> str:
     )
 
 
-def request(
+def request_json(
     method: str, path: str, token: str, body: dict[str, object] | None = None
-) -> dict[str, object]:
+) -> object:
     """Call a fixed-host repository administration endpoint over HTTPS.
 
     Args:
@@ -53,7 +53,7 @@ def request(
         body: Public policy settings to serialize, when required.
 
     Returns:
-        A decoded response object, or an empty object for no-content responses.
+        Decoded JSON, or an empty object for no-content responses.
 
     Raises:
         RuntimeError: If the API rejects the request or returns an unexpected body.
@@ -78,9 +78,128 @@ def request(
     except urllib.error.URLError:
         raise RuntimeError("GitHub administration endpoint is unreachable") from None
     value: object = json.loads(raw) if raw else {}
+    return value
+
+
+def request(
+    method: str, path: str, token: str, body: dict[str, object] | None = None
+) -> dict[str, object]:
+    """Request a repository administration response with an object shape.
+
+    Args:
+        method: Explicit HTTP method.
+        path: GitHub repository API path.
+        token: Private existing administration credential.
+        body: Optional public policy fields.
+
+    Returns:
+        The decoded JSON object.
+
+    Raises:
+        RuntimeError: If the API response is not an object.
+    """
+    value = request_json(method, path, token, body)
     if not isinstance(value, dict):
         raise RuntimeError("Unexpected GitHub response type")
     return cast("dict[str, object]", value)
+
+
+def ruleset_index(base: str, token: str) -> dict[str, dict[str, object]]:
+    """List repository-owned rulesets without changing unrelated policies.
+
+    Args:
+        base: Authorized repository API base path.
+        token: Private existing administration credential.
+
+    Returns:
+        Repository rulesets indexed by unique name.
+
+    Raises:
+        RuntimeError: If response shapes or duplicate names are ambiguous.
+    """
+    value = request_json("GET", base + "/rulesets?includes_parents=false&per_page=100", token)
+    if not isinstance(value, list) or len(value) >= 100:
+        raise RuntimeError("Unexpected or incomplete repository ruleset listing")
+    result: dict[str, dict[str, object]] = {}
+    for item in value:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+            raise RuntimeError("Unexpected ruleset summary")
+        row = cast("dict[str, object]", item)
+        name = str(row["name"])
+        if name in result:
+            raise RuntimeError("Ambiguous duplicate ruleset name: " + name)
+        result[name] = row
+    return result
+
+
+def configured_rulesets(policy: dict[str, object]) -> list[dict[str, object]]:
+    """Load the explicit ruleset documents beside the reviewed repository policy.
+
+    Args:
+        policy: Parsed public repository policy.
+
+    Returns:
+        The reviewed ruleset payloads.
+    """
+    return [
+        cast("dict[str, object]", json.loads(Path(path).read_text(encoding="utf-8")))
+        for path in cast("list[str]", policy["ruleset_files"])
+    ]
+
+
+def apply_rulesets(base: str, token: str, payloads: list[dict[str, object]]) -> None:
+    """Create or update named rulesets while preserving other administrators' rules.
+
+    Args:
+        base: Authorized repository API base path.
+        token: Private existing administration credential.
+        payloads: Reviewed ruleset definitions.
+    """
+    existing = ruleset_index(base, token)
+    for payload in payloads:
+        name = str(payload["name"])
+        current = existing.get(name)
+        path = base + "/rulesets"
+        if current is not None:
+            path += "/" + str(current["id"])
+        request("PUT" if current else "POST", path, token, payload)
+        print("Applied ruleset: " + name)
+
+
+def check_rulesets(base: str, token: str, payloads: list[dict[str, object]]) -> list[int]:
+    """Read back active rules, conditions and bypasses without mutating GitHub.
+
+    Args:
+        base: Authorized repository API base path.
+        token: Private existing administration credential.
+        payloads: Reviewed ruleset definitions.
+
+    Returns:
+        Verified ruleset identifiers.
+
+    Raises:
+        RuntimeError: If any configured ruleset is absent or differs.
+    """
+    existing = ruleset_index(base, token)
+    identifiers: list[int] = []
+    for payload in payloads:
+        name = str(payload["name"])
+        current = existing.get(name)
+        if current is None:
+            raise RuntimeError("Required ruleset missing: " + name)
+        identifier = cast("int", current["id"])
+        observed = request("GET", base + "/rulesets/" + str(identifier), token)
+        expected_header = {key: value for key, value in payload.items() if key != "rules"}
+        require_values(observed, expected_header, name)
+        rules = cast("list[dict[str, object]]", observed.get("rules", []))
+        expected_rules = cast("list[dict[str, object]]", payload["rules"])
+        indexed = {str(rule["type"]): rule for rule in rules}
+        if set(indexed) != {rule["type"] for rule in expected_rules}:
+            raise RuntimeError("Ruleset rule types differ: " + name)
+        for rule in expected_rules:
+            require_values(indexed[str(rule["type"])], rule, name + "." + str(rule["type"]))
+        identifiers.append(identifier)
+    return identifiers
 
 
 def apply_policy(policy: dict[str, object], token: str) -> None:
@@ -117,6 +236,28 @@ def apply_policy(policy: dict[str, object], token: str) -> None:
     print("Enabled automated dependency security fixes")
     request("PATCH", base, token, {"security_and_analysis": policy["security_and_analysis"]})
     print("Applied secret scanning and push protection")
+    apply_rulesets(base, token, configured_rulesets(policy))
+
+
+def require_status_checks(observed: object, expected: list[dict[str, object]], prefix: str) -> None:
+    """Compare check names and originating apps independently of API ordering.
+
+    Args:
+        observed: Current required-status-check list.
+        expected: Reviewed context/app bindings.
+        prefix: Public policy location used in safe diagnostics.
+
+    Raises:
+        RuntimeError: If contexts, list shape or originating apps differ.
+    """
+    if not isinstance(observed, list):
+        raise RuntimeError(f"Policy setting missing: {prefix}")
+    rows = cast("list[dict[str, object]]", observed)
+    indexed = {row["context"]: row for row in rows}
+    if len(indexed) != len(rows) or set(indexed) != {row["context"] for row in expected}:
+        raise RuntimeError(f"Required check contexts differ: {prefix}")
+    for row in expected:
+        require_values(indexed[row["context"]], row, prefix)
 
 
 def require_values(observed: dict[str, object], expected: dict[str, object], prefix: str) -> None:
@@ -133,6 +274,9 @@ def require_values(observed: dict[str, object], expected: dict[str, object], pre
     for key, wanted in expected.items():
         actual = observed.get(key)
         location = f"{prefix}.{key}"
+        if key == "required_status_checks" and isinstance(wanted, list):
+            require_status_checks(actual, cast("list[dict[str, object]]", wanted), location)
+            continue
         if isinstance(wanted, dict):
             if not isinstance(actual, dict):
                 raise RuntimeError(f"Policy setting missing: {location}")
@@ -187,6 +331,7 @@ def check_policy(policy: dict[str, object], token: str) -> None:
         "code_owner_review": reviews.get("require_code_owner_reviews"),
         "required_checks": checks.get("contexts"),
         "actions": request("GET", base + "/actions/permissions/workflow", token),
+        "verified_ruleset_ids": check_rulesets(base, token, configured_rulesets(policy)),
         "policy_verified": True,
     }
     print(json.dumps(result, indent=2))

@@ -2,6 +2,8 @@
 
 ## Unreleased — M1 foundation
 
+- Activate main and working-branch rulesets, require GitHub Actions as the source
+  of required checks, and version their idempotent administration/readback support.
 - Replace the unused backend/desktop scaffold with the agreed src-based modular
   structure; preserve the original Telegram workflow and Git history.
 - Establish Python 3.14 Conda onboarding, typed M1 contracts, in-memory transaction

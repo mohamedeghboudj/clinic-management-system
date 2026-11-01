@@ -25,3 +25,16 @@ PRs #5–#7 assign M1 implementation and M2 independent testing; review
 requests name M3 @SamirKor and M4 @MohamedAmine-dash while PRs stay draft.
 Issue #1 assigns M1/M2/M3/M4; #2–#4 assign M1 coordination. These
 assignments do not establish completed tests, approvals or merges.
+
+## Active rulesets — 1 November
+
+Main ruleset 26311417 requires PR-only updates, two current approvals, code-owner
+review, resolved conversations, current app-bound CI and squash merging; it blocks
+force pushes/deletion and configures no bypass actors. Working-branch ruleset
+26311418 blocks force pushes while preserving normal commits and merged-branch
+deletion. Classic protection remains active. Live full-policy readback passed.
+Four administration regression tests verify idempotent named updates, ambiguous
+name rejection, required-check app identity and bypass detection. The current
+complete stack passes 85 author-verification tests; nine M5 cases remain pending.
+Production/test-support coverage remains 98.99%; M2 independent evidence and
+M3/M4 approvals are still required. See `docs/github-administration.md` for scope.
