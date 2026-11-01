@@ -1,13 +1,53 @@
-# Available reviewers only; pending usernames must not be fabricated.
-# M1: @mohamedeghboudj; M3: @SamirKor; M5: @ayyoubbouchama.
-# M2 and M4 have not joined. Add them through a reviewed ownership PR.
-# Two approvals and the assigned review rotation remain mandatory.
-* @mohamedeghboudj @SamirKor
-/src/clinic_management/domain/people/ @ayyoubbouchama
-/src/clinic_management/domain/access/ @ayyoubbouchama
+# Assigned review pairs; both approvals are required by the team rotation.
+# GitHub CODEOWNERS requires one matching owner's approval, not both named owners.
+# Protected main also requires two approvals; check the assigned pair manually.
+# M1 @mohamedeghboudj; M2 @ahmed-ammiche; M3 @SamirKor;
+# M4 @MohamedAmine-dash; M5 @ayyoubbouchama.
+* @SamirKor @MohamedAmine-dash
+/src/clinic_management/domain/people/ @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/domain/access/ @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/domain/shared/contact.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/domain/shared/address.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/domain/shared/time_slot.py @ayyoubbouchama @mohamedeghboudj
 /src/clinic_management/domain/facilities/ @ayyoubbouchama @mohamedeghboudj
 /src/clinic_management/domain/scheduling/ @ayyoubbouchama @mohamedeghboudj
-/src/clinic_management/domain/clinical/ @mohamedeghboudj
-/src/clinic_management/domain/billing/ @SamirKor
-/src/clinic_management/domain/shared/money.py @SamirKor
-/.github/ @mohamedeghboudj @SamirKor
+/src/clinic_management/domain/clinical/ @mohamedeghboudj @ahmed-ammiche
+/src/clinic_management/domain/billing/ @ahmed-ammiche @SamirKor
+/src/clinic_management/domain/shared/money.py @ahmed-ammiche @SamirKor
+/.github/ @SamirKor @MohamedAmine-dash
+/src/clinic_management/domain/shared/validation.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/ports/passwords.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/ports/identity_provider.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/ports/people.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/ports/accounts.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/ports/sessions.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/contracts/people.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/contracts/access.py @MohamedAmine-dash @ayyoubbouchama
+/docs/permissions.md @MohamedAmine-dash @ayyoubbouchama
+/docs/design/people-access.md @MohamedAmine-dash @ayyoubbouchama
+/docs/adr/0002-identity-security.md @MohamedAmine-dash @ayyoubbouchama
+/tests/unit/domain/people/ @MohamedAmine-dash @ayyoubbouchama
+/tests/unit/domain/access/ @MohamedAmine-dash @ayyoubbouchama
+/tests/unit/domain/shared/test_contact*.py @MohamedAmine-dash @ayyoubbouchama
+/tests/unit/domain/shared/test_address*.py @MohamedAmine-dash @ayyoubbouchama
+/tests/unit/domain/shared/test_validation*.py @MohamedAmine-dash @ayyoubbouchama
+/src/clinic_management/application/ports/scheduling.py @ayyoubbouchama @mohamedeghboudj
+/src/clinic_management/application/ports/facilities.py @ayyoubbouchama @mohamedeghboudj
+/src/clinic_management/application/contracts/scheduling.py @ayyoubbouchama @mohamedeghboudj
+/src/clinic_management/domain/inventory/ @ayyoubbouchama @mohamedeghboudj
+/docs/design/facilities-scheduling.md @ayyoubbouchama @mohamedeghboudj
+/docs/design/inventory.md @ayyoubbouchama @mohamedeghboudj
+/tests/unit/domain/facilities/ @ayyoubbouchama @mohamedeghboudj
+/tests/unit/domain/scheduling/ @ayyoubbouchama @mohamedeghboudj
+/tests/unit/domain/shared/test_time_slot*.py @ayyoubbouchama @mohamedeghboudj
+/src/clinic_management/application/ports/clinical.py @mohamedeghboudj @ahmed-ammiche
+/src/clinic_management/application/contracts/clinical.py @mohamedeghboudj @ahmed-ammiche
+/docs/design/clinical.md @mohamedeghboudj @ahmed-ammiche
+/tests/unit/domain/clinical/ @mohamedeghboudj @ahmed-ammiche
+/src/clinic_management/application/ports/billing.py @ahmed-ammiche @SamirKor
+/src/clinic_management/application/contracts/billing.py @ahmed-ammiche @SamirKor
+/src/clinic_management/domain/financial/ @ahmed-ammiche @SamirKor
+/src/clinic_management/domain/procurement/ @ahmed-ammiche @SamirKor
+/docs/design/billing-procurement.md @ahmed-ammiche @SamirKor
+/tests/unit/domain/billing/ @ahmed-ammiche @SamirKor
+/tests/unit/domain/shared/test_money*.py @ahmed-ammiche @SamirKor
