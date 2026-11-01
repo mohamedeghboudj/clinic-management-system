@@ -1,41 +1,95 @@
-@'
 # Clinic Management System
 
-A desktop application for managing clinic operations, built with Python.
+Python desktop and modular backend project for clinic staff. The authoritative
+database will be remote PostgreSQL; Week 1 foundation commands use memory only.
 
-## Technology Stack
+The foundation is being implemented by M1 (Mohamed). Patient/access, scheduling,
+clinical and billing implementations belong to M2–M5. Empty feature packages are
+documented extension locations, not claims that those features work.
 
-- Python and PySide6 — desktop client
-- FastAPI — centralized API backend
-- PostgreSQL — shared relational database
-- SQLAlchemy — database ORM
-- Alembic — database migrations
-- pytest — automated testing
+## Start in a fresh Conda environment
 
-## Architecture
+The team confirmed **Python 3.14**. Run from this repository root:
 
-Desktop clients communicate with the FastAPI backend over the clinic
-network. The backend validates requests, enforces permissions, and
-accesses PostgreSQL. Desktop clients do not connect directly to PostgreSQL.
+```powershell
+conda env create --prefix ./.conda-env --file environment.yml
+conda activate ./.conda-env
+python -m pip install --require-hashes -r requirements-dev.txt
+python -m pip install --no-deps --no-build-isolation -e .
+# Integrated foundation demo arrives in the dependent demo PR.
+```
 
-## Repository Structure
+Install the local hooks with `python -m pre_commit install` after activating the environment.
+Do not reuse the base Conda environment. `environment.yml` defines the portable
+minor-version baseline; `requirements-dev.txt` hash-locks Python tooling. Native
+Conda dependencies vary by operating system. CI uses clean Python 3.14 runners
+on Linux and Windows to check portability. No local database service is needed.
 
-- `desktop/` — PySide6 desktop application
-- `backend/` — FastAPI backend and database migrations
-- `database/` — SQL scripts and database documentation
-- `tests/` — unit, API, and integration tests
-- `docs/` — project documentation and team charter
+## Verify before requesting review
 
-## Setup
+```powershell
+python -m ruff check src tests scripts
+python -m ruff format --check src tests scripts
+python -m mypy
+python -m scripts.check_source
+python -m scripts.check_repository
+python -m scripts.check_workflows
+python -m scripts.requirements_input
+python -m pylint --persistent=no src tests scripts
+python -m deptry .
+python -m scripts.check_secrets
+python -m pytest --cov --cov-report=term-missing --cov-report=json
+python -m scripts.check_coverage
+python -m build --no-isolation
+```
 
-1. Install Python and PostgreSQL.
-2. Create and activate a virtual environment.
-3. Install dependencies using `python -m pip install -r requirements.txt`.
-4. Create a local `.env` file based on `.env.example`.
-5. Configure PostgreSQL and initialize the database migrations.
-6. Start the backend and desktop client using the development instructions.
+Tests in `tests/verification/` are M1 author verification, permitted by Mohamed.
+They do **not** replace M2's independent foundation tests. M1's billing contract
+tests are explicitly deferred until M5's implementation is available. Missing
+features never receive passing placeholder tests.
 
-## Team Process Charter
+## Structure and ownership
 
-[Read the Team Process Charter](docs/Team-Process-Charter.pdf)
-'@ | Set-Content -Encoding utf8 README.md
+| Location | Purpose / owner |
+| --- | --- |
+| `src/clinic_management/domain/shared/` | M1 identity, errors, event envelopes; M5 adds Money, M3 TimeSlot, M2 contact/address. |
+| `src/clinic_management/domain/people/`, `access/` | M2 profiles, membership and authorization. |
+| `src/clinic_management/domain/facilities/`, `scheduling/` | M3 clinic resources and scheduling. |
+| `src/clinic_management/domain/clinical/` | M4 notes, prescriptions and service catalogue. |
+| `src/clinic_management/domain/billing/` | M5 invoices and payment records. |
+| `application/contracts/`, `application/ports/` | M1 shared DTOs/ports; each member adds their feature contracts. |
+| `infrastructure/`, `api/`, `desktop/`, `bootstrap/` | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Week 1. |
+| `tests/support/` | Deterministic clocks/IDs and single-threaded rollback/version fakes. |
+| `scripts/` | Offline checks, foundation demo and explicit GitHub policy administration. |
+| `docs/` | Architecture, handoff contracts, operations and review evidence. |
+
+No domain module imports SQLAlchemy, FastAPI, Qt, application adapters or tests.
+Account roles are composed, not represented by empty Person subclasses. Preserve
+the public M1 signatures in [the contract index](docs/contracts/foundation.md).
+
+## GitHub workflow
+
+Use short-lived `feature/w1-foundation-*` branches and PRs into `main`. Two
+assigned human approvals and independent testing remain mandatory. M3 is
+`@SamirKor`; M5 is `@ayyoubbouchama`; M2/M4 usernames are pending. Never substitute
+the author, a bot or a fabricated reviewer for a missing teammate.
+
+Your original `.github/workflows/telegram-notif.yml` is preserved byte-for-byte.
+New workflows use pinned action commits, least-privilege tokens, timeouts and
+clean installs. See [GitHub administration](docs/github-administration.md) for
+the exact policy and the difference between prepared files and active settings.
+
+## Continue here
+
+- [Contribution and review rules](CONTRIBUTING.md)
+- [Architecture and dependency decisions](docs/adr/0001-architecture.md)
+- [Foundation signatures and compatibility](docs/contracts/foundation.md)
+- [Error codes](docs/contracts/error-codes.md)
+- [Recovery and operation runbook](docs/runbook.md)
+- [M1 completion and external dependencies](docs/M1_PROGRESS.md)
+- [Security reporting and telemetry](SECURITY.md)
+
+The three planning documents live outside this standalone repository in the
+parent `Project/` directory as requested. The previous nonempty process charter
+was also preserved there as `Team-Process-Charter.pdf`. Historical scaffold
+contents remain recoverable through Git history.

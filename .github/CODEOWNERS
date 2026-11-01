@@ -1,0 +1,13 @@
+# Available reviewers only; pending usernames must not be fabricated.
+# M1: @mohamedeghboudj; M3: @SamirKor; M5: @ayyoubbouchama.
+# M2 and M4 have not joined. Add them through a reviewed ownership PR.
+# Two approvals and the assigned review rotation remain mandatory.
+* @mohamedeghboudj @SamirKor
+/src/clinic_management/domain/people/ @ayyoubbouchama
+/src/clinic_management/domain/access/ @ayyoubbouchama
+/src/clinic_management/domain/facilities/ @ayyoubbouchama @mohamedeghboudj
+/src/clinic_management/domain/scheduling/ @ayyoubbouchama @mohamedeghboudj
+/src/clinic_management/domain/clinical/ @mohamedeghboudj
+/src/clinic_management/domain/billing/ @SamirKor
+/src/clinic_management/domain/shared/money.py @SamirKor
+/.github/ @mohamedeghboudj @SamirKor
