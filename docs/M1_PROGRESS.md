@@ -6,7 +6,8 @@ verification. It depends on the foundation contracts PR and does not merge into
 main until the preceding PR is accepted and this PR is retargeted to main.
 
 Author verification for contracts and fakes is included. It does not replace
-M2 independent foundation tests or M3/M4 human approvals; M2/M4 have not joined.
+M2 @ahmed-ammiche's independent foundation tests or approvals from M3
+@SamirKor and M4 @MohamedAmine-dash. All have verified write access.
 Acceptance is tracked in [issue #1](https://github.com/mohamedeghboudj/clinic-management-system/issues/1).
 
 The third PR adds the explicit foundation demo and prepared M5 contract cases.
@@ -16,3 +17,11 @@ Full clinic integration remains dependent on actual M2-M5 models, tracked in
 No DB durability, concurrent transaction isolation or live authorization is
 claimed by the single-threaded in-memory fake. GitHub safeguards are active
 and the original Telegram workflow remains unchanged.
+
+## Confirmed GitHub assignments — 1 November
+
+M2 @ahmed-ammiche and M4 @MohamedAmine-dash have verified write access.
+PRs #5–#7 assign M1 implementation and M2 independent testing; review
+requests name M3 @SamirKor and M4 @MohamedAmine-dash while PRs stay draft.
+Issue #1 assigns M1/M2/M3/M4; #2–#4 assign M1 coordination. These
+assignments do not establish completed tests, approvals or merges.
