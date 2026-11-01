@@ -1,6 +1,10 @@
 {
   "repository": "mohamedeghboudj/clinic-management-system",
   "branch": "main",
+  "ruleset_files": [
+    ".github/rulesets/main.json",
+    ".github/rulesets/working-branches.json"
+  ],
   "repository_settings": {
     "allow_merge_commit": false,
     "allow_rebase_merge": false,

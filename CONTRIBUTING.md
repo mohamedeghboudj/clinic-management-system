@@ -55,6 +55,13 @@ the assigned pairs; GitHub requires only one matching owner's approval, so the
 second assigned approval must also be checked against the table above.
 Review requests may be assigned while a PR is draft; they are not approvals.
 
+Active rulesets reject direct pushes to main, require current checks from the
+GitHub Actions app, and permit only squash PR merges into main. Main cannot be
+deleted or force-pushed. All other branches reject force pushes too; use normal
+commits/merge updates when collaborating. No actor has a configured ruleset bypass.
+See `docs/github-administration.md` for exact rules and the initial CODEOWNERS
+bootstrap limitation before #5 merges.
+
 ## Seven code rules
 
 1. No block over 40 lines repeated at least three times. The configured duplicate
