@@ -139,6 +139,11 @@ class Invoice(Entity):
                     message_key="invoice.issue_dates.required",
                 )
             require_aware_datetime(self.issued_at, "invoice.issued_at.naive")
+            if isinstance(self.due_on, datetime) or self.due_on < self.issued_at.date():
+                raise ValidationError(
+                    code="INVALID_VALUE",
+                    message_key="invoice.due_on.invalid",
+                )
         if self.status == InvoiceStatus.VOID:
             self.void_reason = require_non_empty_text(
                 self.void_reason or "",
