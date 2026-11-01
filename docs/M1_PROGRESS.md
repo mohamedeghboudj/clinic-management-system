@@ -51,7 +51,35 @@ record that temporary dependency and retarget after its PR merges.
 - Foundation-only demo passes; sdist and wheel build successfully.
 - No live database/backend/GUI is deployed. The full clinic demo remains pending.
 
-Remote PR links and actual Linux/Windows CI results follow publication.
+## Published PR stack and remote verification
+
+| Order | Branch / draft PR | Dependency |
+| --- | --- | --- |
+| 1 | [Contracts/tooling #5](https://github.com/mohamedeghboudj/clinic-management-system/pull/5) — `feature/w1-foundation-contracts` | main |
+| 2 | [Transaction fakes #6](https://github.com/mohamedeghboudj/clinic-management-system/pull/6) — `feature/w1-foundation-fakes` | #5; retarget to main after #5 merges |
+| 3 | [Demo and handoff #7](https://github.com/mohamedeghboudj/clinic-management-system/pull/7) — `feature/w1-foundation-demo` | #6; retarget after preceding acceptance |
+
+All new required quality, Linux/Windows unit, dependency-security and CodeQL
+checks passed for each PR. The top implementation snapshot is commit
+`5bce5ee64f16c03c57c5447b558f6d69d89d54dd`:
+[Foundation CI](https://github.com/mohamedeghboudj/clinic-management-system/actions/runs/41291484274),
+[dependency security](https://github.com/mohamedeghboudj/clinic-management-system/actions/runs/41291484326),
+[CodeQL](https://github.com/mohamedeghboudj/clinic-management-system/actions/runs/41291484208).
+A documentation-only evidence update may advance this branch without changing
+that verified implementation; required checks also run on the new head.
+
+Consumers may fetch/branch from `origin/feature/w1-foundation-demo` while the
+protected-main acceptance gate waits. Do not merge the stack or call independent
+acceptance complete until M2's tests and M3/M4's reviews are present.
+
+### Preserved notification failure
+
+The original Telegram workflow remains byte-for-byte unchanged, but its send
+step currently fails with `Bad Request: TOPIC_CLOSED`. The action downloads and
+secrets are available; the Telegram destination topic needs reopening outside
+the repository. This is separate from the successful required implementation
+checks. Evidence: [original notification run](https://github.com/mohamedeghboudj/clinic-management-system/actions/runs/41291379306).
+No Telegram secret, topic or user-owned workflow was changed.
 
 ## Tracked handoff
 
