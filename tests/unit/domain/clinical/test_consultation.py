@@ -84,7 +84,7 @@ def test_consultation_lifecycle_draft_to_final() -> None:
     # Finalize
     final_time = LATER + timedelta(minutes=15)
     consultation.finalize(at=final_time)
-    assert consultation.status is ConsultationStatus.FINAL
+    assert consultation.status.value == ConsultationStatus.FINAL.value
     assert consultation.finalized_at == final_time
     assert consultation.version == 1
 
