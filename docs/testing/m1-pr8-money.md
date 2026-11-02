@@ -1,5 +1,23 @@
 # Independent M1 test evidence — PR #8
 
+## Latest tester verdict - 2 November 2026
+
+**ACCEPTED by M1 as independent tester.** M5 fix source: `4e38e68c3f8b0eb73a2df12c473ac31588426c0f`.
+The 39 independent Money cases all pass unchanged. The complete local head has
+111 passing tests, zero failures/skips/xfails; Money statements/branches are 100%
+and combined configured coverage is 99.40%, with the per-module gate passing.
+Issues #11/#12 are verified fixed: exact intermediate multiplication then one
+monetary quantization, and safe domain rejection of unsupported finite magnitude.
+
+Ruff, formatting, strict mypy, source/duplication checks pass. All required checks
+on the fix head pass, including Linux/Windows, dependency security and CodeQL:
+[CI evidence](https://github.com/mohamedeghboudj/clinic-management-system/actions/runs/41361334368).
+This final documentation update preserves every regression assertion. M2/M3 final
+reviews remain required; M1's tester sign-off is not either reviewer approval.
+The initial evidence below is retained as history and is superseded by this retest.
+
+---
+
 **Date:** 1 November 2026. **Tester:** @mohamedeghboudj.
 **Author:** @ayyoubbouchama. **Assigned reviewers:** @ahmed-ammiche, @SamirKor.
 **Submitted implementation tested:** `9910f3f24d866f4f18cc6d2b1c9f45f0656ab397`.
