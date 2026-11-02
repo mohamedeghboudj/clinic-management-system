@@ -18,7 +18,6 @@ from clinic_management.domain.clinical.enums import (
 from clinic_management.domain.clinical.record_entry import ClinicalEntry
 from clinic_management.domain.clinical.validation import validate_clinical_text
 from clinic_management.domain.shared.errors import (
-    InvalidTransitionError,
     ValidationError,
 )
 
