@@ -1,5 +1,26 @@
 # Independent M1 test evidence — PR #9
 
+## Latest tester verdict - 2 November 2026
+
+**ACCEPTED by M1 as independent tester.** M5 fix source: `e5461378f7d64d51f7eaec7591810a1db72a25cf`.
+The complete local head passes **180 tests** with zero failures/skips/xfails.
+All **96 M1 independent/contract cases** pass unchanged, including the original
+nine billing contracts and all seven previously failing regressions. Both ISSUED
+and VOID reconstruction now enforce the same due-date invariant as issue().
+Issues #11/#12/#13 are verified resolved on the tested code.
+
+Combined configured coverage is 98.37%; the per-module gate passes. Ruff,
+formatting, strict mypy, source/duplication checks pass. Required checks on this
+fix head are green, including Linux/Windows, dependency security and CodeQL:
+[CI evidence](https://github.com/mohamedeghboudj/clinic-management-system/actions/runs/41361555918).
+No financial source, test expectation, skip or coverage threshold was changed by
+M1 during retesting. Documentation-only sign-off follows the tested fixes.
+M2/M3 final approvals and the existing dependency merge sequence remain required.
+
+The initial evidence below is historical and superseded by this retest.
+
+---
+
 **Date:** 1 November 2026. **Tester:** @mohamedeghboudj.
 **Author:** @ayyoubbouchama. **Assigned reviewers:** @ahmed-ammiche, @SamirKor.
 **Submitted implementation tested:** `9929c145be370240099d0d8cb2824dce58cd0923`.
