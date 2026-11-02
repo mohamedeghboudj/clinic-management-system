@@ -24,8 +24,6 @@ def main() -> int:
                 continue
             collector.scan_file(str(path))
     findings = list(collector)
-    for filename, _ in findings:
-        print(f"{filename}: candidate found; inspect locally")
     print(f"Secret scan: {len(findings)} candidate(s)")
     return int(bool(findings))
 
