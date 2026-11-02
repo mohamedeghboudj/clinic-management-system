@@ -32,13 +32,37 @@ LATER = NOW + timedelta(minutes=30)
 
 def test_medication_validates_non_empty_name() -> None:
     """Verify that Medication requires a non-empty name and normalizes strings."""
-    med = Medication(name="  Amoxicillin  ", strength="500 mg", form="capsule")
+    med = Medication(name="  Amoxicillin  ", strength=" 500 mg ", form=" capsule ")
     assert med.name == "Amoxicillin"
     assert med.strength == "500 mg"
     assert med.form == "capsule"
 
+    # Only name
+    med_only = Medication(name="Aspirin")
+    assert med_only.name == "Aspirin"
+    assert med_only.strength is None
+    assert med_only.form is None
+
+    # Empty name or non-string
     with pytest.raises(ValidationError):
         Medication(name="   ")
+
+    with pytest.raises(ValidationError):
+        Medication(name=123)  # type: ignore[arg-type]
+
+    # Empty strength or non-string
+    with pytest.raises(ValidationError):
+        Medication(name="Aspirin", strength="   ")
+
+    with pytest.raises(ValidationError):
+        Medication(name="Aspirin", strength=500)  # type: ignore[arg-type]
+
+    # Empty form or non-string
+    with pytest.raises(ValidationError):
+        Medication(name="Aspirin", form="   ")
+
+    with pytest.raises(ValidationError):
+        Medication(name="Aspirin", form=123)  # type: ignore[arg-type]
 
 
 # ======================================================================
@@ -51,14 +75,29 @@ def test_prescription_item_validates_required_directions() -> None:
     med = Medication(name="Ibuprofen", strength="400 mg")
     item = PrescriptionItem(
         medication=med,
-        dose="1 tablet",
-        route="oral",
-        frequency="three times daily",
-        duration="3 days",
+        dose=" 1 tablet ",
+        route=" oral ",
+        frequency=" three times daily ",
+        duration=" 3 days ",
+        instructions=" with water ",
     )
     assert item.dose == "1 tablet"
     assert item.route == "oral"
+    assert item.frequency == "three times daily"
+    assert item.duration == "3 days"
+    assert item.instructions == "with water"
 
+    # Non-medication
+    with pytest.raises(ValidationError):
+        PrescriptionItem(
+            medication="not-a-medication",  # type: ignore[arg-type]
+            dose="1 tablet",
+            route="oral",
+            frequency="daily",
+            duration="3 days",
+        )
+
+    # Empty dose / non-string
     with pytest.raises(ValidationError):
         PrescriptionItem(
             medication=med,
@@ -66,6 +105,64 @@ def test_prescription_item_validates_required_directions() -> None:
             route="oral",
             frequency="daily",
             duration="3 days",
+        )
+    with pytest.raises(ValidationError):
+        PrescriptionItem(
+            medication=med,
+            dose=1,  # type: ignore[arg-type]
+            route="oral",
+            frequency="daily",
+            duration="3 days",
+        )
+
+    # Empty route / non-string
+    with pytest.raises(ValidationError):
+        PrescriptionItem(
+            medication=med,
+            dose="1 tablet",
+            route="   ",
+            frequency="daily",
+            duration="3 days",
+        )
+
+    # Empty frequency
+    with pytest.raises(ValidationError):
+        PrescriptionItem(
+            medication=med,
+            dose="1 tablet",
+            route="oral",
+            frequency="   ",
+            duration="3 days",
+        )
+
+    # Empty duration
+    with pytest.raises(ValidationError):
+        PrescriptionItem(
+            medication=med,
+            dose="1 tablet",
+            route="oral",
+            frequency="daily",
+            duration="   ",
+        )
+
+    # Empty instructions or non-string
+    with pytest.raises(ValidationError):
+        PrescriptionItem(
+            medication=med,
+            dose="1 tablet",
+            route="oral",
+            frequency="daily",
+            duration="3 days",
+            instructions="   ",
+        )
+    with pytest.raises(ValidationError):
+        PrescriptionItem(
+            medication=med,
+            dose="1 tablet",
+            route="oral",
+            frequency="daily",
+            duration="3 days",
+            instructions=123,  # type: ignore[arg-type]
         )
 
 
@@ -126,6 +223,83 @@ def test_prescription_lifecycle_draft_issue_and_cancel() -> None:
     assert prescription.cancelled_at == LATER
     assert prescription.version == 2
 
+    # Cannot cancel already cancelled
+    with pytest.raises(InvalidTransitionError):
+        prescription.cancel("Already cancelled", at=LATER)
+
+    # Cannot cancel with empty reason
+    draft_p = Prescription(
+        id=UUID("00000000-0000-0000-0000-000000000041"),
+        clinic_id=CLINIC_ID,
+        patient_id=PATIENT_ID,
+        doctor_id=DOCTOR_ID,
+    )
+    with pytest.raises(ValidationError):
+        draft_p.cancel("   ", at=NOW)
+    with pytest.raises(ValidationError):
+        draft_p.cancel(123, at=NOW)  # type: ignore[arg-type]
+
+    # Can cancel from DRAFT
+    draft_p.cancel("No longer needed", at=NOW)
+    assert draft_p.status is PrescriptionStatus.CANCELLED
+
+
+def test_prescription_item_management_and_validation() -> None:
+    """Verify Prescription item addition, removal, and constructor invariants."""
+    med = Medication(name="Paracetamol", strength="500 mg")
+    item = PrescriptionItem(
+        medication=med,
+        dose="1 tablet",
+        route="oral",
+        frequency="once daily",
+        duration="3 days",
+    )
+    cid = UUID("00000000-0000-0000-0000-000000000099")
+    prescription = Prescription(
+        id=UUID("00000000-0000-0000-0000-000000000042"),
+        clinic_id=CLINIC_ID,
+        patient_id=PATIENT_ID,
+        doctor_id=DOCTOR_ID,
+        consultation_id=cid,
+        items=[item],
+    )
+    assert prescription.consultation_id == cid
+    assert prescription.get_items() == (item,)
+
+    # Add invalid item
+    with pytest.raises(ValidationError):
+        prescription.add_item("not-an-item")  # type: ignore[arg-type]
+
+    # Remove item out of range
+    with pytest.raises(ValidationError):
+        prescription.remove_item(-1)
+    with pytest.raises(ValidationError):
+        prescription.remove_item(5)
+
+    # Valid remove
+    prescription.remove_item(0)
+    assert len(prescription.items()) == 0
+
+    # Invalid status in constructor
+    with pytest.raises(ValidationError):
+        Prescription(
+            id=UUID("00000000-0000-0000-0000-000000000043"),
+            clinic_id=CLINIC_ID,
+            patient_id=PATIENT_ID,
+            doctor_id=DOCTOR_ID,
+            status="INVALID",  # type: ignore[arg-type]
+        )
+
+    # Invalid item in constructor
+    with pytest.raises(ValidationError):
+        Prescription(
+            id=UUID("00000000-0000-0000-0000-000000000043"),
+            clinic_id=CLINIC_ID,
+            patient_id=PATIENT_ID,
+            doctor_id=DOCTOR_ID,
+            items=["invalid"],  # type: ignore[list-item]
+        )
+
 
 # ======================================================================
 # Service Catalog Item Tests
@@ -174,11 +348,83 @@ def test_service_catalog_item_activation_lifecycle() -> None:
 
 def test_service_catalog_item_rejects_negative_price_or_empty_code() -> None:
     """Verify that negative price or blank code raises ValidationError."""
+    price = Money(amount=Decimal("1000.00"), currency="DZD")
+
+    # Empty code
     with pytest.raises(ValidationError):
         ServiceCatalogItem(
             id=UUID("00000000-0000-0000-0000-000000000051"),
             clinic_id=CLINIC_ID,
             code="  ",
             description="Consultation",
-            price=Money(amount=Decimal("1000.00"), currency="DZD"),
+            price=price,
         )
+
+    # Non-str code
+    with pytest.raises(ValidationError):
+        ServiceCatalogItem(
+            id=UUID("00000000-0000-0000-0000-000000000051"),
+            clinic_id=CLINIC_ID,
+            code=123,  # type: ignore[arg-type]
+            description="Consultation",
+            price=price,
+        )
+
+    # Empty description or non-str
+    with pytest.raises(ValidationError):
+        ServiceCatalogItem(
+            id=UUID("00000000-0000-0000-0000-000000000051"),
+            clinic_id=CLINIC_ID,
+            code="CONS",
+            description="   ",
+            price=price,
+        )
+    with pytest.raises(ValidationError):
+        ServiceCatalogItem(
+            id=UUID("00000000-0000-0000-0000-000000000051"),
+            clinic_id=CLINIC_ID,
+            code="CONS",
+            description=None,  # type: ignore[arg-type]
+            price=price,
+        )
+
+    # Non-Money price
+    with pytest.raises(ValidationError):
+        ServiceCatalogItem(
+            id=UUID("00000000-0000-0000-0000-000000000051"),
+            clinic_id=CLINIC_ID,
+            code="CONS",
+            description="Consultation",
+            price="1000",  # type: ignore[arg-type]
+        )
+
+    # Invalid duration minutes
+    with pytest.raises(ValidationError):
+        ServiceCatalogItem(
+            id=UUID("00000000-0000-0000-0000-000000000051"),
+            clinic_id=CLINIC_ID,
+            code="CONS",
+            description="Consultation",
+            price=price,
+            duration_minutes=0,
+        )
+    with pytest.raises(ValidationError):
+        ServiceCatalogItem(
+            id=UUID("00000000-0000-0000-0000-000000000051"),
+            clinic_id=CLINIC_ID,
+            code="CONS",
+            description="Consultation",
+            price=price,
+            duration_minutes="30",  # type: ignore[arg-type]
+        )
+
+    # Change price invalid
+    item = ServiceCatalogItem(
+        id=UUID("00000000-0000-0000-0000-000000000053"),
+        clinic_id=CLINIC_ID,
+        code="CONS",
+        description="Consultation",
+        price=price,
+    )
+    with pytest.raises(ValidationError):
+        item.change_price("invalid")  # type: ignore[arg-type]
