@@ -15,18 +15,17 @@ def main() -> int:
     Returns:
         Zero if no candidate secrets are found, otherwise one.
     """
-    secrets = SecretsCollection()
+    collector = SecretsCollection()
     with default_settings():
         for path in project_files(Path.cwd().resolve()):
             if path.name == "requirements-dev.txt" or path.suffix in {".png", ".pdf", ".ico"}:
                 continue
             if path.name.startswith((".coverage", "coverage.")):
                 continue
-            secrets.scan_file(str(path))
-    findings = list(secrets)
-    for filename, finding in findings:
-        finding_kind = str(finding.type)
-        print(f"{filename}:{finding.line_number}: {finding_kind}; inspect locally")
+            collector.scan_file(str(path))
+    findings = list(collector)
+    for filename, _ in findings:
+        print(f"{filename}: candidate found; inspect locally")
     print(f"Secret scan: {len(findings)} candidate(s)")
     return int(bool(findings))
 
