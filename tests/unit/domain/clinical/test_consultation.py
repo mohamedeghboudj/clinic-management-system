@@ -46,6 +46,10 @@ def test_validate_clinical_text_rejects_empty_or_whitespace() -> None:
     assert exc.value.code == "INVALID_VALUE"
     assert exc.value.message_key == "clinical.note.empty"
 
+    with pytest.raises(ValidationError) as exc_type:
+        validate_clinical_text(123, field="note", max_length=100)  # type: ignore[arg-type]
+    assert exc_type.value.code == "INVALID_VALUE"
+
 
 def test_validate_clinical_text_rejects_exceeding_max_length() -> None:
     """Verify that text exceeding maximum length raises ValidationError."""
@@ -166,6 +170,46 @@ def test_clinical_entry_is_immutable_and_validates_fields() -> None:
     with pytest.raises(FrozenInstanceError):
         entry.content = "New content"  # type: ignore[misc]
 
+    # Non-string kind
+    with pytest.raises(ValidationError):
+        ClinicalEntry(
+            id=UUID("00000000-0000-0000-0000-000000000020"),
+            clinic_id=CLINIC_ID,
+            patient_id=PATIENT_ID,
+            consultation_id=None,
+            author_id=DOCTOR_ID,
+            kind=123,  # type: ignore[arg-type]
+            content="Content",
+            recorded_at=NOW,
+        )
+
+    # Empty kind
+    with pytest.raises(ValidationError):
+        ClinicalEntry(
+            id=UUID("00000000-0000-0000-0000-000000000020"),
+            clinic_id=CLINIC_ID,
+            patient_id=PATIENT_ID,
+            consultation_id=None,
+            author_id=DOCTOR_ID,
+            kind="   ",
+            content="Content",
+            recorded_at=NOW,
+        )
+
+    # Kind too long (> 100)
+    with pytest.raises(ValidationError) as exc_too_long:
+        ClinicalEntry(
+            id=UUID("00000000-0000-0000-0000-000000000020"),
+            clinic_id=CLINIC_ID,
+            patient_id=PATIENT_ID,
+            consultation_id=None,
+            author_id=DOCTOR_ID,
+            kind="K" * 101,
+            content="Content",
+            recorded_at=NOW,
+        )
+    assert exc_too_long.value.message_key == "clinical.entry.kind.too_long"
+
 
 def test_clinical_amendment_applies_to_matching_entry() -> None:
     """Verify that an amendment correctly verifies matching entry, patient, and clinic IDs."""
@@ -205,6 +249,32 @@ def test_clinical_amendment_applies_to_matching_entry() -> None:
     )
     assert amendment.applies_to(other_entry) is False
 
+    # Mismatched patient
+    mismatched_patient_entry = ClinicalEntry(
+        id=entry_id,
+        clinic_id=CLINIC_ID,
+        patient_id=UUID("00000000-0000-0000-0000-000000000099"),
+        consultation_id=None,
+        author_id=DOCTOR_ID,
+        kind="consultation_note",
+        content="Blood pressure was 120/80.",
+        recorded_at=NOW,
+    )
+    assert amendment.applies_to(mismatched_patient_entry) is False
+
+    # Mismatched clinic
+    mismatched_clinic_entry = ClinicalEntry(
+        id=entry_id,
+        clinic_id=UUID("00000000-0000-0000-0000-000000000099"),
+        patient_id=PATIENT_ID,
+        consultation_id=None,
+        author_id=DOCTOR_ID,
+        kind="consultation_note",
+        content="Blood pressure was 120/80.",
+        recorded_at=NOW,
+    )
+    assert amendment.applies_to(mismatched_clinic_entry) is False
+
 
 def test_clinical_amendment_rejects_empty_reason() -> None:
     """Verify that an amendment without a reason raises ValidationError."""
@@ -239,3 +309,36 @@ def test_clinical_entry_summary_dto() -> None:
     )
     assert summary.kind == "prescription"
     assert summary.amended is False
+
+    # Non-string kind
+    with pytest.raises(ValidationError):
+        ClinicalEntrySummary(
+            entry_id=UUID("00000000-0000-0000-0000-000000000060"),
+            patient_id=PATIENT_ID,
+            kind=123,  # type: ignore[arg-type]
+            author_id=DOCTOR_ID,
+            recorded_at=NOW,
+            amended=False,
+        )
+
+    # Empty kind
+    with pytest.raises(ValidationError):
+        ClinicalEntrySummary(
+            entry_id=UUID("00000000-0000-0000-0000-000000000060"),
+            patient_id=PATIENT_ID,
+            kind="   ",
+            author_id=DOCTOR_ID,
+            recorded_at=NOW,
+            amended=False,
+        )
+
+    # Invalid amended boolean
+    with pytest.raises(ValidationError):
+        ClinicalEntrySummary(
+            entry_id=UUID("00000000-0000-0000-0000-000000000060"),
+            patient_id=PATIENT_ID,
+            kind="prescription",
+            author_id=DOCTOR_ID,
+            recorded_at=NOW,
+            amended="no",  # type: ignore[arg-type]
+        )

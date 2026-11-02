@@ -209,7 +209,7 @@ def test_time_slot_half_open_contains_semantics() -> None:
 def test_appointment_lifecycle_scheduled_to_completed() -> None:
     """Verify standard appointment flow: SCHEDULED -> CHECKED_IN -> COMPLETED."""
     slot = call("shared.time_slot", "TimeSlot", start=SLOT_START, end=SLOT_END)
-    status_enum = getattr(dependency("scheduling.enums"), "AppointmentStatus")
+    status_enum = dependency("scheduling.enums").AppointmentStatus
     appt = cast(
         AppointmentContract,
         call(
@@ -237,7 +237,7 @@ def test_appointment_lifecycle_scheduled_to_completed() -> None:
 def test_appointment_cannot_complete_directly_from_scheduled() -> None:
     """Verify that completing an appointment without checking in is forbidden."""
     slot = call("shared.time_slot", "TimeSlot", start=SLOT_START, end=SLOT_END)
-    status_enum = getattr(dependency("scheduling.enums"), "AppointmentStatus")
+    status_enum = dependency("scheduling.enums").AppointmentStatus
     appt = cast(
         AppointmentContract,
         call(
@@ -260,7 +260,7 @@ def test_appointment_cannot_complete_directly_from_scheduled() -> None:
 def test_appointment_early_no_show_is_rejected() -> None:
     """Verify that marking no-show before the slot ends is rejected."""
     slot = call("shared.time_slot", "TimeSlot", start=SLOT_START, end=SLOT_END)
-    status_enum = getattr(dependency("scheduling.enums"), "AppointmentStatus")
+    status_enum = dependency("scheduling.enums").AppointmentStatus
     appt = cast(
         AppointmentContract,
         call(
@@ -285,7 +285,7 @@ def test_appointment_early_no_show_is_rejected() -> None:
 def test_appointment_cancellation_requires_reason() -> None:
     """Verify that cancelling an appointment requires a non-empty reason."""
     slot = call("shared.time_slot", "TimeSlot", start=SLOT_START, end=SLOT_END)
-    status_enum = getattr(dependency("scheduling.enums"), "AppointmentStatus")
+    status_enum = dependency("scheduling.enums").AppointmentStatus
     appt = cast(
         AppointmentContract,
         call(
@@ -312,8 +312,8 @@ def test_appointment_cancellation_requires_reason() -> None:
 
 def test_room_service_lifecycle() -> None:
     """Verify Room is bookable when active and unbookable when out of service."""
-    room_type = getattr(dependency("facilities.enums"), "RoomType").CONSULTATION
-    room_status = getattr(dependency("facilities.enums"), "RoomStatus")
+    room_type = dependency("facilities.enums").RoomType.CONSULTATION
+    room_status = dependency("facilities.enums").RoomStatus
     room = cast(
         RoomContract,
         call(

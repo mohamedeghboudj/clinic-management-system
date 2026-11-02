@@ -24,8 +24,9 @@ def main() -> int:
                 continue
             secrets.scan_file(str(path))
     findings = list(secrets)
-    for filename, secret in findings:
-        print(f"{filename}:{secret.line_number}: {secret.type}; inspect locally")
+    for filename, finding in findings:
+        finding_kind = str(finding.type)
+        print(f"{filename}:{finding.line_number}: {finding_kind}; inspect locally")
     print(f"Secret scan: {len(findings)} candidate(s)")
     return int(bool(findings))
 
