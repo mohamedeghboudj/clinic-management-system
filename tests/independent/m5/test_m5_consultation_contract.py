@@ -1,4 +1,4 @@
-﻿"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
+"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
 
 from __future__ import annotations
 
@@ -18,7 +18,6 @@ from clinic_management.domain.clinical.enums import (
 from clinic_management.domain.clinical.record_entry import ClinicalEntry
 from clinic_management.domain.clinical.validation import validate_clinical_text
 from clinic_management.domain.shared.errors import (
-    InvalidTransitionError,
     ValidationError,
 )
 
