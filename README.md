@@ -16,7 +16,7 @@ conda env create --prefix ./.conda-env --file environment.yml
 conda activate ./.conda-env
 python -m pip install --require-hashes -r requirements-dev.txt
 python -m pip install --no-deps --no-build-isolation -e .
-# Integrated foundation demo arrives in the dependent demo PR.
+python -m scripts.demo_model --foundation-only
 ```
 
 Install the local hooks with `python -m pre_commit install` after activating the environment.
