@@ -1,0 +1,65 @@
+name: Foundation CI
+
+"on":
+  pull_request:
+  push:
+    branches: [main, "feature/w1-foundation-*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: foundation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: python -m pip install --require-hashes -r requirements-dev.txt
+      - run: python -m pip install --no-deps --no-build-isolation -e .
+      - run: python -m ruff check src tests scripts
+      - run: python -m ruff format --check src tests scripts
+      - run: python -m mypy
+      - run: python -m scripts.check_source
+      - run: python -m scripts.check_repository
+      - run: python -m scripts.check_workflows
+      - run: python -m scripts.requirements_input
+      - run: python -m pylint src tests scripts
+      - run: python -m deptry .
+      - run: python -m scripts.check_secrets
+      - run: python -m build --no-isolation
+
+  unit:
+    name: unit (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: python -m pip install --require-hashes -r requirements-dev.txt
+      - run: python -m pip install --no-deps --no-build-isolation -e .
+      - run: python -m pytest --cov --cov-report=term-missing --cov-report=json
+      - run: python -m scripts.check_coverage
+      - name: Demonstrate available foundation contracts
+        if: ${{ hashFiles('scripts/demo_model.py') != '' }}
+        run: python -m scripts.demo_model --foundation-only
