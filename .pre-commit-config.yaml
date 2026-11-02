@@ -1,0 +1,35 @@
+repos:
+  - repo: local
+    hooks:
+      - id: clinic-ruff
+        name: Ruff source checks
+        entry: python -m ruff check
+        language: system
+        types: [python]
+      - id: clinic-format
+        name: Ruff formatting check
+        entry: python -m ruff format --check
+        language: system
+        types: [python]
+      - id: clinic-types
+        name: Strict project types
+        entry: python -m mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: clinic-source
+        name: Source and architecture contracts
+        entry: python -m scripts.check_source
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: clinic-secrets
+        name: Secret and forbidden-artifact checks
+        entry: python -m scripts.check_repository
+        language: system
+        pass_filenames: false
+      - id: clinic-secret-values
+        name: Candidate secret scan
+        entry: python -m scripts.check_secrets
+        language: system
+        pass_filenames: false
