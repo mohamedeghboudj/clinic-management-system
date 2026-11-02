@@ -23,9 +23,7 @@ class ClinicalRepository(Protocol):
     enable optimistic-concurrency control at the infrastructure layer.
     """
 
-    def get_consultation(
-        self, clinic_id: UUID, consultation_id: UUID
-    ) -> Consultation | None:
+    def get_consultation(self, clinic_id: UUID, consultation_id: UUID) -> Consultation | None:
         """Retrieve a consultation by its identifier within a clinic.
 
         Args:
@@ -54,9 +52,7 @@ class ClinicalRepository(Protocol):
         """
         ...
 
-    def save_consultation(
-        self, consultation: Consultation, *, expected_version: int
-    ) -> None:
+    def save_consultation(self, consultation: Consultation, *, expected_version: int) -> None:
         """Persist an updated consultation with optimistic-concurrency control.
 
         Args:
@@ -97,9 +93,7 @@ class ClinicalRepository(Protocol):
         """
         ...
 
-    def get_entry(
-        self, clinic_id: UUID, entry_id: UUID
-    ) -> ClinicalEntry | None:
+    def get_entry(self, clinic_id: UUID, entry_id: UUID) -> ClinicalEntry | None:
         """Retrieve a clinical entry by its identifier within a clinic.
 
         Args:
@@ -115,9 +109,7 @@ class ClinicalRepository(Protocol):
         """
         ...
 
-    def list_amendments(
-        self, clinic_id: UUID, entry_id: UUID
-    ) -> tuple[ClinicalAmendment, ...]:
+    def list_amendments(self, clinic_id: UUID, entry_id: UUID) -> tuple[ClinicalAmendment, ...]:
         """Return all amendments for a clinical entry in chronological order.
 
         Args:
@@ -159,9 +151,7 @@ class ClinicalRepository(Protocol):
         """
         ...
 
-    def get_prescription(
-        self, clinic_id: UUID, prescription_id: UUID
-    ) -> Prescription | None:
+    def get_prescription(self, clinic_id: UUID, prescription_id: UUID) -> Prescription | None:
         """Retrieve a prescription by its identifier within a clinic.
 
         Args:
@@ -190,9 +180,7 @@ class ClinicalRepository(Protocol):
         """
         ...
 
-    def save_prescription(
-        self, prescription: Prescription, *, expected_version: int
-    ) -> None:
+    def save_prescription(self, prescription: Prescription, *, expected_version: int) -> None:
         """Persist an updated prescription with optimistic-concurrency control.
 
         Args:
@@ -217,9 +205,7 @@ class ServiceCatalogRepository(Protocol):
     control.
     """
 
-    def get(
-        self, clinic_id: UUID, service_id: UUID
-    ) -> ServiceCatalogItem | None:
+    def get(self, clinic_id: UUID, service_id: UUID) -> ServiceCatalogItem | None:
         """Retrieve a service-catalog item by its identifier within a clinic.
 
         Args:
@@ -248,9 +234,7 @@ class ServiceCatalogRepository(Protocol):
         """
         ...
 
-    def save(
-        self, service: ServiceCatalogItem, *, expected_version: int
-    ) -> None:
+    def save(self, service: ServiceCatalogItem, *, expected_version: int) -> None:
         """Persist an updated service-catalog item with concurrency control.
 
         Args:
@@ -265,9 +249,7 @@ class ServiceCatalogRepository(Protocol):
         """
         ...
 
-    def list_active(
-        self, clinic_id: UUID, page: PageRequest
-    ) -> Page[ServiceCatalogItem]:
+    def list_active(self, clinic_id: UUID, page: PageRequest) -> Page[ServiceCatalogItem]:
         """Return a paginated list of active service-catalog items.
 
         Args:

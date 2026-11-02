@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
@@ -74,10 +74,14 @@ class PrescriptionItem:
             )
 
         object.__setattr__(
-            self, "dose", _validate_non_empty_str(self.dose, field_name="dose"),
+            self,
+            "dose",
+            _validate_non_empty_str(self.dose, field_name="dose"),
         )
         object.__setattr__(
-            self, "route", _validate_non_empty_str(self.route, field_name="route"),
+            self,
+            "route",
+            _validate_non_empty_str(self.route, field_name="route"),
         )
         object.__setattr__(
             self,
@@ -134,7 +138,9 @@ class Prescription(Entity):
     cancelled_at: datetime | None = None
     version: int = 0
     _items: list[PrescriptionItem] = field(
-        init=False, default_factory=list, repr=False,
+        init=False,
+        default_factory=list,
+        repr=False,
     )
 
     def __init__(

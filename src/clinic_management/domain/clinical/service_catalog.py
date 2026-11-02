@@ -73,10 +73,7 @@ class ServiceCatalogItem(Entity):
 
         # --- duration_minutes ---
         if self.duration_minutes is not None:
-            if (
-                not isinstance(self.duration_minutes, int)
-                or self.duration_minutes <= 0
-            ):
+            if not isinstance(self.duration_minutes, int) or self.duration_minutes <= 0:
                 raise ValidationError(
                     code="INVALID_VALUE",
                     message_key="clinical.service_catalog.duration.invalid",
