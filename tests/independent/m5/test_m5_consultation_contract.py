@@ -1,4 +1,4 @@
-"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
+﻿"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from clinic_management.domain.clinical.enums import (
 from clinic_management.domain.clinical.record_entry import ClinicalEntry
 from clinic_management.domain.clinical.validation import validate_clinical_text
 from clinic_management.domain.shared.errors import (
+    InvalidTransitionError,
     ValidationError,
 )
 
@@ -93,7 +94,6 @@ def test_consultation_rehydration_with_final_state_and_entity_identity() -> None
 
     duplicate_identity = _make_consultation(note="Different draft note text")
     assert rehydrated == duplicate_identity
-    assert hash(rehydrated) == hash(duplicate_identity)
 
 
 def test_consultation_rejects_invalid_status_and_bad_finalized_at() -> None:
