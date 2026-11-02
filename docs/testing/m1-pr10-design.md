@@ -1,5 +1,30 @@
 # Independent M1 design assessment — PR #10
 
+## Latest tester verdict - 2 November 2026
+
+**ACCEPTED by M1 for Week 1 DESIGN scope.** M5 revision: `d85ab097a40e906a3c9a54ad5073b005742c9506`,
+with the final documentation clarifications recorded in this branch's sign-off commit.
+The command reservation/loser path now returns the original result without a
+second posting. The final specification explicitly uses READ COMMITTED, trusted
+clinic/actor scope, the existing published validate_payment signature, actor-scoped
+uniqueness and safe bounded unknown-outcome handling. These align with the member
+guide and avoid treating stronger isolation levels as interchangeable.
+
+All 14 deferred model entries now link to concrete, M5-assigned implementation
+checklists: billing #18, finance #19, procurement #20. Issue #14's design acceptance
+criteria are satisfied; runtime implementation is deliberately tracked in #18.
+All five documented future concurrency/failure scenarios were reassessed.
+
+The unchanged branch foundation suite passes 64 tests locally. Required checks on
+M5's revision passed on Linux/Windows with quality/security/CodeQL green:
+[CI evidence](https://github.com/mohamedeghboudj/clinic-management-system/actions/runs/41361708127).
+Those checks do not prove future SQL race safety; real adapter concurrency tests
+remain required before those deferred capabilities ship. M2/M3 reviews remain.
+
+The original assessment below is historical and superseded by this finalization.
+
+---
+
 **Date:** 1 November 2026. **Tester:** @mohamedeghboudj.
 **Author:** @ayyoubbouchama. **Reviewers:** @ahmed-ammiche and @SamirKor.
 **Submitted design:** `cdcbaabf70a3f65d43ecd3ef48121a2fa40d71e4`.
