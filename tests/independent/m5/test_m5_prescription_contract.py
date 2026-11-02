@@ -44,6 +44,83 @@ NAIVE_DT = datetime(2026, 11, 2, 9, 0, 0)
 NON_UTC_DT = datetime(2026, 11, 2, 10, 0, 0, tzinfo=timezone(timedelta(hours=1)))
 
 
+class _DummyClinicalRepository:
+    """Structural fake satisfying the ClinicalRepository protocol."""
+
+    def get_consultation(self, clinic_id: UUID, consultation_id: UUID) -> Consultation | None:
+        """Return None for consultation lookup."""
+        _ = (clinic_id, consultation_id)
+        return None
+
+    def add_consultation(self, consultation: Consultation) -> None:
+        """Accept a new consultation."""
+        _ = consultation
+
+    def save_consultation(self, consultation: Consultation, *, expected_version: int) -> None:
+        """Accept an updated consultation."""
+        _ = (consultation, expected_version)
+
+    def append_entry(self, entry: ClinicalEntry) -> None:
+        """Accept an immutable clinical entry."""
+        _ = entry
+
+    def append_amendment(self, amendment: ClinicalAmendment) -> None:
+        """Accept an immutable clinical amendment."""
+        _ = amendment
+
+    def get_entry(self, clinic_id: UUID, entry_id: UUID) -> ClinicalEntry | None:
+        """Return None for clinical entry lookup."""
+        _ = (clinic_id, entry_id)
+        return None
+
+    def list_amendments(self, clinic_id: UUID, entry_id: UUID) -> tuple[ClinicalAmendment, ...]:
+        """Return an empty tuple of amendments."""
+        _ = (clinic_id, entry_id)
+        return ()
+
+    def list_history(
+        self, clinic_id: UUID, patient_id: UUID, page: PageRequest
+    ) -> Page[ClinicalEntrySummary]:
+        """Return an empty page of clinical entry summaries."""
+        _ = (clinic_id, patient_id, page)
+        return Page(items=(), next_cursor=None)
+
+    def get_prescription(self, clinic_id: UUID, prescription_id: UUID) -> Prescription | None:
+        """Return None for prescription lookup."""
+        _ = (clinic_id, prescription_id)
+        return None
+
+    def add_prescription(self, prescription: Prescription) -> None:
+        """Accept a new prescription."""
+        _ = prescription
+
+    def save_prescription(self, prescription: Prescription, *, expected_version: int) -> None:
+        """Accept an updated prescription."""
+        _ = (prescription, expected_version)
+
+
+class _DummyServiceCatalogRepository:
+    """Structural fake satisfying the ServiceCatalogRepository protocol."""
+
+    def get(self, clinic_id: UUID, service_id: UUID) -> ServiceCatalogItem | None:
+        """Return None for service lookup."""
+        _ = (clinic_id, service_id)
+        return None
+
+    def add(self, service: ServiceCatalogItem) -> None:
+        """Accept a new service catalog item."""
+        _ = service
+
+    def save(self, service: ServiceCatalogItem, *, expected_version: int) -> None:
+        """Accept an updated service catalog item."""
+        _ = (service, expected_version)
+
+    def list_active(self, clinic_id: UUID, page: PageRequest) -> Page[ServiceCatalogItem]:
+        """Return an empty page of active services."""
+        _ = (clinic_id, page)
+        return Page(items=(), next_cursor=None)
+
+
 def _sample_item(name: str = "Amoxicillin") -> PrescriptionItem:
     """Create a valid baseline PrescriptionItem for independent tests."""
     return PrescriptionItem(
@@ -227,57 +304,7 @@ def test_service_catalog_item_validates_zero_and_negative_money_prices() -> None
 
 def test_clinical_and_service_catalog_repository_protocols_are_runtime_checkable() -> None:
     """Structural fakes implementing the documented port methods satisfy isinstance checks."""
-
-    class _FakeClinicalRepo:
-        def get_consultation(self, clinic_id: UUID, consultation_id: UUID) -> Consultation | None:
-            return None
-
-        def add_consultation(self, consultation: Consultation) -> None:
-            pass
-
-        def save_consultation(self, consultation: Consultation, *, expected_version: int) -> None:
-            pass
-
-        def append_entry(self, entry: ClinicalEntry) -> None:
-            pass
-
-        def append_amendment(self, amendment: ClinicalAmendment) -> None:
-            pass
-
-        def get_entry(self, clinic_id: UUID, entry_id: UUID) -> ClinicalEntry | None:
-            return None
-
-        def list_amendments(self, clinic_id: UUID, entry_id: UUID) -> tuple[ClinicalAmendment, ...]:
-            return ()
-
-        def list_history(
-            self, clinic_id: UUID, patient_id: UUID, page: PageRequest
-        ) -> Page[ClinicalEntrySummary]:
-            return Page(items=(), next_cursor=None)
-
-        def get_prescription(self, clinic_id: UUID, prescription_id: UUID) -> Prescription | None:
-            return None
-
-        def add_prescription(self, prescription: Prescription) -> None:
-            pass
-
-        def save_prescription(self, prescription: Prescription, *, expected_version: int) -> None:
-            pass
-
-    class _FakeServiceCatalogRepo:
-        def get(self, clinic_id: UUID, service_id: UUID) -> ServiceCatalogItem | None:
-            return None
-
-        def add(self, service: ServiceCatalogItem) -> None:
-            pass
-
-        def save(self, service: ServiceCatalogItem, *, expected_version: int) -> None:
-            pass
-
-        def list_active(self, clinic_id: UUID, page: PageRequest) -> Page[ServiceCatalogItem]:
-            return Page(items=(), next_cursor=None)
-
-    assert isinstance(_FakeClinicalRepo(), ClinicalRepository)
-    assert isinstance(_FakeServiceCatalogRepo(), ServiceCatalogRepository)
+    assert isinstance(_DummyClinicalRepository(), ClinicalRepository)
+    assert isinstance(_DummyServiceCatalogRepository(), ServiceCatalogRepository)
     assert not isinstance(object(), ClinicalRepository)
     assert not isinstance(object(), ServiceCatalogRepository)
