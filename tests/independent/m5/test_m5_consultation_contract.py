@@ -1,4 +1,4 @@
-"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
+﻿"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
 
 from __future__ import annotations
 
@@ -160,7 +160,7 @@ def test_consultation_update_note_and_finalize_preserve_state_on_invalid_inputs(
     assert consultation.version == 0
 
     consultation.finalize(at=T2)
-    assert consultation.status is ConsultationStatus.FINAL
+    assert consultation.status.value == ConsultationStatus.FINAL.value
     assert consultation.finalized_at == T2
     assert consultation.updated_at == T2
     assert consultation.version == 1
@@ -291,3 +291,4 @@ def test_clinical_entry_summary_omits_sensitive_narrative_fields() -> None:
             recorded_at=NAIVE_DT,
             amended=False,
         )
+
