@@ -1,18 +1,3 @@
-@'
-# Desktop application
-PySide6
-httpx
-
-# API backend
-fastapi
-uvicorn[standard]
-pydantic-settings
-
-# PostgreSQL and ORM
-SQLAlchemy
-psycopg[binary]
-alembic
-
-# Testing
-pytest
-'@ | Set-Content -Encoding utf8 requirements.txt
+# Week 1 M1 runtime uses only Python 3.14's standard library.
+# Add tested, pinned third-party runtime packages when their features begin.
+# Development dependencies are locked separately in requirements-dev.txt.
