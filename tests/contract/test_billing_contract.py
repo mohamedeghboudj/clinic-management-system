@@ -11,9 +11,16 @@ from uuid import UUID
 
 import pytest
 
-from clinic_management.domain.shared.errors import InvalidTransitionError, ValidationError
+from clinic_management.domain.shared.entity import Entity
+from clinic_management.domain.shared.errors import (
+    ConcurrencyError,
+    InvalidTransitionError,
+    ValidationError,
+)
 from tests.support.fault_injection import assign_unchecked
 from tests.support.fixtures import FIXED_TIME
+from tests.support.store import MemoryStore
+from tests.support.unit_of_work import MemoryUnitOfWork
 
 pytestmark = pytest.mark.billing_contract
 PREFIX = "clinic_management.domain."
@@ -38,6 +45,14 @@ class MoneyContract(Protocol):
 
 class InvoiceContract(Protocol):
     """Describe the minimal invoice behavior tested independently by M1."""
+
+    version: int
+    status: object
+    number: str | None
+
+    def void(self, reason: str, *, net_paid: MoneyContract, at: datetime) -> None:
+        """Void an issued invoice after reconciling its payments."""
+        ...
 
     def lines(self) -> tuple[object, ...]:
         """Return an immutable view of owned billing lines."""
@@ -271,6 +286,51 @@ def test_partial_payment_and_excess_allocation() -> None:
         payments=(posted,),
         reversals=(),
     )
+
+
+@pytest.mark.parametrize("state", ["DRAFT", "ISSUED", "VOID"])
+def test_versioned_save_preserves_invoice(state: str) -> None:
+    """Saving a real invoice advances its version and preserves its billing state."""
+    line = invoice_line()
+    original = invoice([line])
+    if state in {"ISSUED", "VOID"}:
+        original.issue("DEMO-0001", at=FIXED_TIME, due_on=FIXED_TIME.date())
+    if state == "VOID":
+        original.void("Synthetic correction", net_paid=money("0"), at=FIXED_TIME)
+    assert isinstance(original, Entity)
+    store = MemoryStore()
+    store.replace_collection("invoices", {original.id: original})
+    with MemoryUnitOfWork(store) as transaction:
+        store.save_versioned("invoices", original, expected_version=0)
+        transaction.commit()
+    with pytest.raises(ConcurrencyError):
+        store.save_versioned("invoices", original, expected_version=0)
+
+    saved = cast("InvoiceContract", store.read_collection("invoices")[original.id])
+    assert (original.version, saved.version) == (0, 1)
+    assert saved.status == original.status and saved.number == original.number
+    assert saved.lines() == original.lines() == (line,)
+    assert saved.total().amount == original.total().amount == Decimal("1000.00")
+
+
+def test_rollback_restores_draft_invoice_after_versioned_issue() -> None:
+    """An uncommitted issue restores the draft, including its line and original version."""
+    line = invoice_line()
+    original = invoice([line])
+    assert isinstance(original, Entity)
+    store = MemoryStore()
+    store.replace_collection("invoices", {original.id: original})
+    with MemoryUnitOfWork(store):
+        edited = cast("InvoiceContract", store.read_collection("invoices")[original.id])
+        edited.issue("DEMO-0001", at=FIXED_TIME, due_on=FIXED_TIME.date())
+        assert isinstance(edited, Entity)
+        store.save_versioned("invoices", edited, expected_version=0)
+        staged = cast("InvoiceContract", store.read_collection("invoices")[original.id])
+        assert staged.version == 1 and staged.status == enum_value("InvoiceStatus", "ISSUED")
+    restored = cast("InvoiceContract", store.read_collection("invoices")[original.id])
+    assert restored.version == 0 and restored.status == enum_value("InvoiceStatus", "DRAFT")
+    assert restored.number is None and restored.lines() == (line,)
+    assert restored.total().amount == Decimal("1000.00")
 
 
 def test_reversal_bounds_preserve_original_payment() -> None:

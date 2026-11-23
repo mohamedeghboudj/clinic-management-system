@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
-from dataclasses import dataclass, is_dataclass, replace
-from typing import cast
+from dataclasses import dataclass, is_dataclass
 from uuid import UUID
 
 from clinic_management.application.ports.audit import AuditRecord
@@ -101,12 +100,14 @@ class MemoryStore:
             or self._version_of(entity) != expected_version
         ):
             raise ConcurrencyError(code="STALE_VERSION", message_key="entity.version.stale")
-        candidate: object = deepcopy(entity)
-        if isinstance(candidate, type) or not is_dataclass(candidate):
+        if not is_dataclass(type(entity)):
             raise ValueError("Versioned fixtures must be dataclass entities")
-        # Runtime dataclass validation above guards this test-adapter boundary.
-        factory = cast("Callable[..., Entity]", replace)
-        rows[entity.id] = factory(candidate, version=expected_version + 1)
+        candidate = deepcopy(entity)
+        if candidate is entity:
+            raise ValueError("Versioned fixtures must support detached copies")
+        # Preserve constructor-excluded fields, even on frozen or slotted aggregates.
+        object.__setattr__(candidate, "version", expected_version + 1)
+        rows[entity.id] = candidate
         self.replace_collection(name, rows)
 
     def _version_of(self, entity: Entity) -> int:
