@@ -1,6 +1,6 @@
 """M1 author verification of copied state, rollback and explicit transaction state."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 
 import pytest
@@ -199,18 +199,42 @@ class FrozenVersionedProbe(Entity):
 
     id: UUID
     version: int = 0
+    _items: list[int] = field(default_factory=list, init=False)
 
 
 def test_versioned_save_supports_frozen_slotted_dataclasses() -> None:
-    """Version replacement creates a new instance rather than mutating slots."""
+    """Versioning a detached frozen root preserves its constructor-excluded state."""
     store = MemoryStore()
     probe = FrozenVersionedProbe(id=UUID(int=3))
+    probe._items.append(10)
     store.replace_collection("frozen", {probe.id: probe})
     store.save_versioned("frozen", probe, expected_version=0)
     result = store.read_collection("frozen")[probe.id]
     assert isinstance(result, FrozenVersionedProbe)
     assert result.version == 1
     assert probe.version == 0
+    probe._items.clear()
+    assert result._items == [10]
+
+
+def test_versioned_save_rejects_a_copy_that_aliases_the_caller(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A root that returns itself from deepcopy cannot have its version changed safely."""
+    store = MemoryStore()
+    probe = FrozenVersionedProbe(id=UUID(int=3))
+    store.replace_collection("frozen", {probe.id: probe})
+
+    def identity_copy(root: FrozenVersionedProbe, memo: dict[int, object]) -> FrozenVersionedProbe:
+        """Simulate a frozen value that shares its instance across copies."""
+        return root
+
+    monkeypatch.setattr(FrozenVersionedProbe, "__deepcopy__", identity_copy, raising=False)
+    with pytest.raises(ValueError, match="detached copies"):
+        store.save_versioned("frozen", probe, expected_version=0)
+    saved = store.read_collection("frozen")[probe.id]
+    assert isinstance(saved, FrozenVersionedProbe)
+    assert saved.version == probe.version == 0
 
 
 @pytest.mark.parametrize("version", [-1, True, "bad", None])
