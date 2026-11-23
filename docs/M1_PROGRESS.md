@@ -1,7 +1,21 @@
 # M1 progress and required independent handoff
 
-Date: 2026-11-01. This ledger distinguishes implemented work, author verification
-and external acceptance; it must not be read as independent approval.
+## Handoff on 23 November 2026
+
+Foundation contracts (#5) and transaction support (#6) have merged into
+`main`. PR #7 now targets `main` and adds the foundation demo, billing
+contract tests and handoff material. Run `python -m scripts.demo_model
+--foundation-only` for the offline transaction demo. Running without the
+flag reports pending integration and exits with status 2.
+
+The foundation suite passed 88 tests. Its 13 billing cases require M5's
+billing models. With those models at `ff808da`, the combined suite passed
+all 208 tests. M2's independent foundation evidence and the assigned M3/M4
+reviews are tracked in [issue #1](https://github.com/mohamedeghboudj/clinic-management-system/issues/1#issuecomment-7108746007).
+The full clinic demo is tracked in [issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4).
+
+The sections below record the original 1 November handoff. Test counts,
+branch targets and workflow observations there refer to that earlier snapshot.
 
 ## Implementation scope
 
