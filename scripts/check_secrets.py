@@ -1,4 +1,4 @@
-"""Scan maintained text without printing candidate secret values."""
+"""Scan maintained text and report only a candidate count to CI."""
 
 from pathlib import Path
 
@@ -24,8 +24,6 @@ def main() -> int:
                 continue
             secrets.scan_file(str(path))
     findings = list(secrets)
-    for filename, secret in findings:
-        print(f"{filename}:{secret.line_number}: {secret.type}; inspect locally")
     print(f"Secret scan: {len(findings)} candidate(s)")
     return int(bool(findings))
 

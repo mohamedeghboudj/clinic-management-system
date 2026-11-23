@@ -50,18 +50,18 @@ features never receive passing placeholder tests.
 
 ## Structure and ownership
 
-| Location | Purpose / owner |
-| --- | --- |
-| `src/clinic_management/domain/shared/` | M1 identity, errors, event envelopes; M5 adds Money, M3 TimeSlot, M2 contact/address. |
-| `src/clinic_management/domain/people/`, `access/` | M2 profiles, membership and authorization. |
-| `src/clinic_management/domain/facilities/`, `scheduling/` | M3 clinic resources and scheduling. |
-| `src/clinic_management/domain/clinical/` | M4 notes, prescriptions and service catalogue. |
-| `src/clinic_management/domain/billing/` | M5 invoices and payment records. |
-| `application/contracts/`, `application/ports/` | M1 shared DTOs/ports; each member adds their feature contracts. |
-| `infrastructure/`, `api/`, `desktop/`, `bootstrap/` | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Week 1. |
-| `tests/support/` | Deterministic clocks/IDs and single-threaded rollback/version fakes. |
-| `scripts/` | Offline checks, foundation demo and explicit GitHub policy administration. |
-| `docs/` | Architecture, handoff contracts, operations and review evidence. |
+| Location                                                  | Purpose / owner                                                                          |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `src/clinic_management/domain/shared/`                    | M1 identity, errors, event envelopes; M5 adds Money, M3 TimeSlot, M2 contact/address.    |
+| `src/clinic_management/domain/people/`, `access/`         | M2 profiles, membership and authorization.                                               |
+| `src/clinic_management/domain/facilities/`, `scheduling/` | M3 clinic resources and scheduling.                                                      |
+| `src/clinic_management/domain/clinical/`                  | M4 notes, prescriptions and service catalogue.                                           |
+| `src/clinic_management/domain/billing/`                   | M5 invoices and payment records.                                                         |
+| `application/contracts/`, `application/ports/`            | M1 shared DTOs/ports; each member adds their feature contracts.                          |
+| `infrastructure/`, `api/`, `desktop/`, `bootstrap/`       | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Week 1. |
+| `tests/support/`                                          | Deterministic clocks/IDs and single-threaded rollback/version fakes.                     |
+| `scripts/`                                                | Offline checks, foundation demo and explicit GitHub policy administration.               |
+| `docs/`                                                   | Architecture, handoff contracts, operations and review evidence.                         |
 
 No domain module imports SQLAlchemy, FastAPI, Qt, application adapters or tests.
 Account roles are composed, not represented by empty Person subclasses. Preserve
@@ -70,14 +70,20 @@ the public M1 signatures in [the contract index](docs/contracts/foundation.md).
 ## GitHub workflow
 
 Use short-lived `feature/w1-foundation-*` branches and PRs into `main`. Two
-assigned human approvals and independent testing remain mandatory. M3 is
-`@SamirKor`; M5 is `@ayyoubbouchama`; M2/M4 usernames are pending. Never substitute
+assigned human approvals and independent testing remain mandatory. M2 is
+`@ahmed-ammiche`, M3 `@SamirKor`, M4 `@MohamedAmine-dash` and M5
+`@ayyoubbouchama`; all have verified write access. Never substitute
 the author, a bot or a fabricated reviewer for a missing teammate.
 
 Your original `.github/workflows/telegram-notif.yml` is preserved byte-for-byte.
 New workflows use pinned action commits, least-privilege tokens, timeouts and
 clean installs. See [GitHub administration](docs/github-administration.md) for
 the exact policy and the difference between prepared files and active settings.
+
+Active rulesets require PRs into `main`, two approvals, resolved conversations,
+current required GitHub Actions checks and squash merging, with no bypass actors.
+Main deletion and force pushes are blocked; other branches also block force pushes
+while allowing normal author/tester commits and deletion after merge.
 
 ## Continue here
 
