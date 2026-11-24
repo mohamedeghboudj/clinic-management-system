@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID, uuid4
+from typing import Any
 
 import pytest
 
@@ -23,8 +24,9 @@ _T_AT   = datetime(2026, 11, 10, 9, 5,  tzinfo=UTC)  # 09:05 UTC — during slot
 _SLOT = TimeSlot(start=_T_BASE, end=_T_END)
 
 
-def _make_appointment(**kwargs) -> Appointment:
-    defaults = dict(
+def _make_appointment(**kwargs: Any) -> Appointment:
+    """Build a default valid Appointment, allowing field overrides via kwargs."""
+    defaults: dict[str, Any] = dict(
         id=uuid4(),
         clinic_id=uuid4(),
         patient_id=uuid4(),
@@ -249,32 +251,51 @@ class TestAppointmentMarkNoShow:
     """Tests for Appointment.mark_no_show()."""
 
     def test_no_show_from_scheduled_after_slot_end(self) -> None:
-        """mark_no_show succeeds for a SCHEDULED appointment."""
+        """mark_no_show succeeds for a SCHEDULED appointment after slot.end."""
         appt = _make_appointment()
         after_end = _T_END + timedelta(minutes=5)
         appt.mark_no_show(at=after_end)
         assert appt.status is AppointmentStatus.NO_SHOW
         assert appt.updated_at == after_end
 
-    def test_no_show_before_slot_end_is_allowed_by_entity(self) -> None:
-        """The entity does NOT enforce timing; use case is responsible.
-
-        Calling mark_no_show before slot.end succeeds at the entity level
-        because the business rule (at >= slot.end) is enforced by the
-        application use case, not the entity.
-        """
+    def test_no_show_at_exactly_slot_end_is_allowed(self) -> None:
+        """mark_no_show succeeds when at == slot.end exactly."""
         appt = _make_appointment()
-        before_end = _T_BASE + timedelta(minutes=1)
-        appt.mark_no_show(at=before_end)
+        appt.mark_no_show(at=_T_END)
         assert appt.status is AppointmentStatus.NO_SHOW
 
+    def test_no_show_before_slot_end_is_rejected(self) -> None:
+        """mark_no_show raises ValidationError when at < slot.end.
+
+        A 09:30 no-show on a 09:00–09:30 appointment must be rejected
+        because 09:30 is the exclusive end of the slot.
+        """
+        appt = _make_appointment()
+        # slot ends at _T_END (09:30); 09:29 is strictly before the end
+        before_end = _T_END - timedelta(minutes=1)
+        with pytest.raises(ValidationError) as exc_info:
+            appt.mark_no_show(at=before_end)
+        assert exc_info.value.code == "INVALID_VALUE"
+        assert "no_show" in exc_info.value.message_key
+        # Status must not have changed
+        assert appt.status is AppointmentStatus.SCHEDULED
+
+    def test_no_show_well_before_slot_end_is_rejected(self) -> None:
+        """mark_no_show at slot start is also rejected."""
+        appt = _make_appointment()
+        with pytest.raises(ValidationError):
+            appt.mark_no_show(at=_T_BASE)
+        assert appt.status is AppointmentStatus.SCHEDULED
+
     def test_no_show_from_checked_in_raises(self) -> None:
+        """mark_no_show from CHECKED_IN raises InvalidTransitionError."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         with pytest.raises(InvalidTransitionError):
             appt.mark_no_show(at=_T_END + timedelta(minutes=1))
 
     def test_no_show_naive_timestamp_raises(self) -> None:
+        """mark_no_show with a naive timestamp raises ValidationError."""
         appt = _make_appointment()
         with pytest.raises(ValidationError):
             appt.mark_no_show(at=datetime(2026, 11, 10, 9, 35))

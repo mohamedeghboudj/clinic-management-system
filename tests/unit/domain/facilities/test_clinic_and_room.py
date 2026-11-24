@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import time
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -19,14 +20,16 @@ _ALGIERS = "Africa/Algiers"
 
 
 def _default_hours(tz: str = _ALGIERS) -> OpeningHours:
+    """Build a standard Mon–Fri 08:00–17:00 ``OpeningHours`` for a given timezone."""
     periods = tuple(
         OpeningPeriod(weekday=d, opens_at=time(8), closes_at=time(17)) for d in range(5)
     )
     return OpeningHours(timezone=tz, periods=periods)
 
 
-def _make_clinic(**kwargs) -> Clinic:
-    defaults = dict(
+def _make_clinic(**kwargs: Any) -> Clinic:
+    """Build a default valid ``Clinic``, allowing field overrides via kwargs."""
+    defaults: dict[str, Any] = dict(
         id=uuid4(),
         name="Polyclinique Centrale",
         contact=ContactInfo(phone="+213550123456"),
@@ -38,8 +41,9 @@ def _make_clinic(**kwargs) -> Clinic:
     return Clinic(**defaults)
 
 
-def _make_room(**kwargs) -> Room:
-    defaults = dict(
+def _make_room(**kwargs: Any) -> Room:
+    """Build a default valid ``Room``, allowing field overrides via kwargs."""
+    defaults: dict[str, Any] = dict(
         id=uuid4(),
         clinic_id=uuid4(),
         number="C-01",

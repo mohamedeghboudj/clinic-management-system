@@ -17,7 +17,7 @@ from uuid import UUID
 from clinic_management.domain.facilities.opening_hours import OpeningHours
 from clinic_management.domain.shared._invariants import require_uuid
 from clinic_management.domain.shared.errors import ValidationError
-from clinic_management.domain.shared.time_slot import TimeSlot, require_aware
+from clinic_management.domain.shared.time_slot import TimeSlot
 from clinic_management.domain.shared.validation import require_non_empty
 
 

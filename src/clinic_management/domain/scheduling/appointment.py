@@ -160,18 +160,25 @@ class Appointment(Entity):
     def mark_no_show(self, *, at: datetime) -> None:
         """Transition from SCHEDULED to NO_SHOW.
 
-        A no-show should only be recorded after the appointment slot has ended.
-        This method does NOT enforce the timing rule — the calling use case is
-        responsible for checking that ``at >= slot.end`` before calling.
+        A no-show may only be recorded once the appointment slot has ended,
+        i.e. ``at >= slot.end``.  Calling this method before the slot ends
+        raises ``ValidationError`` so that a 09:30 no-show on a 09:00–10:00
+        appointment is rejected at the entity level.
 
         Args:
             at: Timezone-aware timestamp when the no-show is recorded.
 
         Raises:
-            ValidationError: If *at* is naive.
+            ValidationError: If *at* is naive or before the slot end.
             InvalidTransitionError: If the current status is not SCHEDULED.
         """
         require_aware(at, "at")
+        if at < self.slot.end:
+            raise ValidationError(
+                code="INVALID_VALUE",
+                message_key="appointment.no_show.before_slot_end",
+                safe_details={"at": str(at), "slot_end": str(self.slot.end)},
+            )
         self._transition_to(AppointmentStatus.NO_SHOW, at=at)
 
     def reschedule(self, slot: TimeSlot, *, at: datetime) -> None:

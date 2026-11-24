@@ -9,7 +9,7 @@ from __future__ import annotations
 import abc
 from uuid import UUID
 
-from clinic_management.application.ports.pagination import Page, PageRequest
+from clinic_management.application.contracts.paging import Page, PageRequest
 from clinic_management.domain.facilities.clinic import Clinic
 from clinic_management.domain.facilities.room import Room
 

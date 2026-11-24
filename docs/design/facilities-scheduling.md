@@ -233,7 +233,7 @@ COMPLETED
 - `check_in()` requires status `SCHEDULED`.
 - `complete()` requires status `CHECKED_IN`.
 - `cancel(reason)` requires a non-empty cancellation reason; permitted from `SCHEDULED` or `CHECKED_IN`.
-- `mark_no_show()` requires status `SCHEDULED`. Timing enforcement (at ≥ slot.end) is the use case's responsibility.
+- `mark_no_show()` requires status `SCHEDULED` and `at >= slot.end`; raises `ValidationError` if called before the slot ends (entity-level guard).
 - `reschedule(slot)` requires status `SCHEDULED`; does not check for conflicts.
 - All timestamp arguments must be timezone-aware.
 

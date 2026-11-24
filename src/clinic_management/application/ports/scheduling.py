@@ -14,7 +14,7 @@ import abc
 from datetime import date
 from uuid import UUID
 
-from clinic_management.application.ports.pagination import Page, PageRequest
+from clinic_management.application.contracts.paging import Page, PageRequest
 from clinic_management.application.contracts.scheduling import AppointmentSummary
 from clinic_management.domain.scheduling.appointment import Appointment
 from clinic_management.domain.shared.time_slot import TimeSlot

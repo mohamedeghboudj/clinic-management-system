@@ -1,0 +1,16 @@
+# Generated from [dependency-groups].dev by scripts.requirements_input.
+# Edit pyproject.toml, regenerate this input, then compile the hash lock.
+build
+deptry
+detect-secrets
+mypy
+pip-audit
+pip-tools
+pre-commit
+pylint
+pytest
+pytest-cov
+PyYAML
+ruff
+setuptools
+types-PyYAML

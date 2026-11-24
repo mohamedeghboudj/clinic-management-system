@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import zoneinfo
 from dataclasses import dataclass
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 from clinic_management.domain.shared.errors import ValidationError
 from clinic_management.domain.shared.time_slot import TimeSlot
@@ -97,12 +97,12 @@ class OpeningHours:
             )
         try:
             zoneinfo.ZoneInfo(self.timezone)
-        except (zoneinfo.ZoneInfoNotFoundError, KeyError):
+        except (zoneinfo.ZoneInfoNotFoundError, KeyError) as exc:
             raise ValidationError(
                 code="INVALID_VALUE",
                 message_key="opening_hours.timezone.unknown",
                 safe_details={"field": "timezone"},
-            )
+            ) from exc
         if not isinstance(self.periods, tuple):
             raise ValidationError(
                 code="INVALID_VALUE",
@@ -142,7 +142,11 @@ class OpeningHours:
             weekday = local_date.weekday()
 
             # Determine the portion of the slot that falls on this date.
-            day_start = local_start if local_date == local_start.date() else _midnight(local_date, tz)
+            day_start = (
+                local_start
+                if local_date == local_start.date()
+                else _midnight(local_date, tz)
+            )
 
             # The end of the coverage check on this date:
             # either the actual slot end or midnight of the next day.
@@ -175,16 +179,22 @@ class OpeningHours:
 
 
 def _dates_spanned(
-    local_start: object,  # datetime in local tz
-    local_end: object,  # datetime in local tz
+    local_start: datetime,
+    local_end: datetime,
     tz: zoneinfo.ZoneInfo,
 ) -> list[date]:
-    """Return all calendar dates touched by [local_start, local_end)."""
-    from datetime import datetime as _dt
+    """Return all calendar dates touched by [local_start, local_end).
 
-    assert isinstance(local_start, _dt)
-    assert isinstance(local_end, _dt)
+    Args:
+        local_start: Slot start expressed in the clinic's local timezone.
+        local_end: Slot end expressed in the clinic's local timezone.
+        tz: The clinic's local ``ZoneInfo`` (unused directly; retained for
+            signature consistency with callers).
 
+    Returns:
+        Ordered list of ``date`` objects covering every calendar day
+        spanned by the half-open interval.
+    """
     result: list[date] = []
     current = local_start.date()
     end_date = local_end.date()
@@ -198,34 +208,65 @@ def _dates_spanned(
     return result
 
 
-def _midnight(d: date, tz: zoneinfo.ZoneInfo) -> object:
-    """Return midnight (00:00) on *d* in *tz* as an aware datetime."""
-    from datetime import datetime as _dt
+def _midnight(d: date, tz: zoneinfo.ZoneInfo) -> datetime:
+    """Return midnight (00:00) on *d* in *tz* as an aware datetime.
 
-    return _dt(d.year, d.month, d.day, 0, 0, 0, tzinfo=tz)
+    Args:
+        d: Calendar date for which to compute midnight.
+        tz: Timezone to attach to the resulting datetime.
+
+    Returns:
+        Timezone-aware ``datetime`` at 00:00:00 on *d*.
+    """
+    return datetime(d.year, d.month, d.day, 0, 0, 0, tzinfo=tz)
 
 
 def _next_date(d: date) -> date:
+    """Return the calendar date immediately following *d*.
+
+    Args:
+        d: Reference date.
+
+    Returns:
+        ``d + timedelta(days=1)``.
+    """
     return d + timedelta(days=1)
 
 
 def _prev_date(d: date) -> date:
+    """Return the calendar date immediately preceding *d*.
+
+    Args:
+        d: Reference date.
+
+    Returns:
+        ``d - timedelta(days=1)``.
+    """
     return d - timedelta(days=1)
 
 
-def _as_time(dt: object) -> time:
-    """Extract the local time portion from a datetime."""
-    from datetime import datetime as _dt
+def _as_time(dt: datetime) -> time:
+    """Extract the local time portion from a datetime.
 
-    assert isinstance(dt, _dt)
+    Args:
+        dt: A timezone-aware or naive ``datetime``.
+
+    Returns:
+        The ``time`` component of *dt* without timezone info.
+    """
     return dt.time().replace(tzinfo=None)
 
 
-def _exact_midnight(local_date: date, local_end: object) -> bool:
-    """Return True if *local_end* is exactly midnight of the *next* day."""
-    from datetime import datetime as _dt
+def _exact_midnight(local_date: date, local_end: datetime) -> bool:
+    """Return True if *local_end* is exactly midnight of the *next* day.
 
-    assert isinstance(local_end, _dt)
+    Args:
+        local_date: The current calendar date being processed.
+        local_end: Slot end expressed in the clinic's local timezone.
+
+    Returns:
+        True when *local_end* falls on the day after *local_date* at 00:00.
+    """
     return local_end.date() == _next_date(local_date) and local_end.time() == time(0, 0)
 
 
