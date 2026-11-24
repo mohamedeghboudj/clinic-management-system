@@ -1,4 +1,4 @@
-# Contributing
+﻿# Contributing
 
 Use the Python 3.14 Conda environment and run the README checks from the repository
 root. Runtime packages belong in pinned `requirements.txt`; direct developer
@@ -41,19 +41,6 @@ rerun checks. Squash-merge the reviewed PR, preserving contributor attribution.
 
 | Author | Assigned reviewers | Independent test author |
 | --- | --- | --- |
-<<<<<<< HEAD
-| M1 Mohamed | M3 SamirKor, M4 pending | M2 pending |
-| M2 pending | M4 pending, M5 ayyoubbouchama | M3 SamirKor |
-| M3 SamirKor | M5 ayyoubbouchama, M1 Mohamed | M4 pending |
-| M4 pending | M1 Mohamed, M2 pending | M5 ayyoubbouchama |
-| M5 ayyoubbouchama | M2 pending, M3 SamirKor | M1 Mohamed |
-
-Author verification is allowed but is labelled separately. Two non-author human
-approvals apply after final changes, including test changes. A reviewer merges.
-M1 work stays unmerged until M2/M4 join or the team explicitly changes the
-assignments. CODEOWNERS can only name available users with repository access;
-its available-owner fallback does not replace the table above.
-=======
 | M1 @mohamedeghboudj | M3 @SamirKor, M4 @MohamedAmine-dash | M2 @ahmed-ammiche |
 | M2 @ahmed-ammiche | M4 @MohamedAmine-dash, M5 @ayyoubbouchama | M3 @SamirKor |
 | M3 @SamirKor | M5 @ayyoubbouchama, M1 @mohamedeghboudj | M4 @MohamedAmine-dash |
@@ -74,7 +61,6 @@ deleted or force-pushed. All other branches reject force pushes too; use normal
 commits/merge updates when collaborating. No actor has a configured ruleset bypass.
 See `docs/github-administration.md` for exact rules and the initial CODEOWNERS
 bootstrap limitation before #5 merges.
->>>>>>> origin/main
 
 ## Seven code rules
 
