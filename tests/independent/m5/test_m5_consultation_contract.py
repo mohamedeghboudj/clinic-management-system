@@ -1,4 +1,4 @@
-﻿"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
+"""Independent M5 contract and boundary tests for M4 consultation deliverables."""
 
 from __future__ import annotations
 
@@ -291,4 +291,3 @@ def test_clinical_entry_summary_omits_sensitive_narrative_fields() -> None:
             recorded_at=NAIVE_DT,
             amended=False,
         )
-
