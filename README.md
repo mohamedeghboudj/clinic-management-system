@@ -16,7 +16,7 @@ conda env create --prefix ./.conda-env --file environment.yml
 conda activate ./.conda-env
 python -m pip install --require-hashes -r requirements-dev.txt
 python -m pip install --no-deps --no-build-isolation -e .
-# Integrated foundation demo arrives in the dependent demo PR.
+python -m scripts.demo_model --foundation-only
 ```
 
 Install the local hooks with `python -m pre_commit install` after activating the environment.
@@ -70,14 +70,20 @@ the public M1 signatures in [the contract index](docs/contracts/foundation.md).
 ## GitHub workflow
 
 Use short-lived `feature/w1-foundation-*` branches and PRs into `main`. Two
-assigned human approvals and independent testing remain mandatory. M3 is
-`@SamirKor`; M5 is `@ayyoubbouchama`; M2/M4 usernames are pending. Never substitute
+assigned human approvals and independent testing remain mandatory. M2 is
+`@ahmed-ammiche`, M3 `@SamirKor`, M4 `@MohamedAmine-dash` and M5
+`@ayyoubbouchama`; all have verified write access. Never substitute
 the author, a bot or a fabricated reviewer for a missing teammate.
 
 Your original `.github/workflows/telegram-notif.yml` is preserved byte-for-byte.
 New workflows use pinned action commits, least-privilege tokens, timeouts and
 clean installs. See [GitHub administration](docs/github-administration.md) for
 the exact policy and the difference between prepared files and active settings.
+
+Active rulesets require PRs into `main`, two approvals, resolved conversations,
+current required GitHub Actions checks and squash merging, with no bypass actors.
+Main deletion and force pushes are blocked; other branches also block force pushes
+while allowing normal author/tester commits and deletion after merge.
 
 ## Continue here
 
