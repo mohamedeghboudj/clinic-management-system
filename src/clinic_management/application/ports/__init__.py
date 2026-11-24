@@ -1,2 +1,1 @@
-"""Application ports: interfaces implemented by infrastructure adapters."""
-
+﻿"""Small typed interfaces implemented by external or in-memory adapters."""

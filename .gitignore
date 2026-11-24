@@ -1,36 +1,41 @@
-@'
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-build/
-dist/
-
-# Virtual environments
-.venv/
-venv/
-
-# Environment variables and secrets
+# Secrets and local configuration
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+credentials*.json
 
-# IDE
+# Isolated environments and generated tooling
+.conda-env/
+.venv/
+.tools/
+.cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.json
+coverage.xml
+htmlcov/
+build/
+dist/
+
+# Health data, exports and local operational artifacts must never be committed
+/logs/
+/exports/
+/backups/
+*.log
+*.dump
+*.sqlite*
+*.db
+
+# Editor and OS files
 .idea/
 .vscode/
-
-# Testing and coverage
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Logs
-*.log
-
-# Local database files
-*.db
-*.sqlite3
-
-# Temporary files
-*.tmp
-'@ | Set-Content -Encoding utf8 .gitignore
+.DS_Store
+Thumbs.db

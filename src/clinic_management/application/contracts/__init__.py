@@ -1,2 +1,1 @@
-"""Application contracts: data transfer objects for M2 domains."""
-
+﻿"""Explicit application boundary values without framework dependencies."""

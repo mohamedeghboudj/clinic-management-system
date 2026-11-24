@@ -1,1 +1,1 @@
-"""Clinic management root package."""
+﻿"""Clinic management application with independent domain and adapter layers."""

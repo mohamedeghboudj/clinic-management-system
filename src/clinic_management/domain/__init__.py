@@ -1,1 +1,1 @@
-"""Domain package."""
+﻿"""Business concepts independent of databases, frameworks and presentation."""

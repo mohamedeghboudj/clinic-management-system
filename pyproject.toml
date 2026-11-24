@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools==84.2.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clinic-management-system"
+version = "0.1.0.dev0"
+description = "Staff desktop and modular backend foundations for clinic management"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dynamic = ["dependencies"]
+
+[dependency-groups]
+dev = [
+    "build", "deptry", "detect-secrets", "mypy", "pip-audit", "pip-tools",
+    "pre-commit", "pylint", "pytest", "pytest-cov", "PyYAML", "ruff",
+    "setuptools", "types-PyYAML",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+clinic_management = ["py.typed"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+extend-exclude = [".conda-env", ".tools", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "D", "ANN", "C90", "PLR0912", "PLR0915", "S", "BLE", "RUF100"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+files = ["src", "tests", "scripts"]
+exclude = [".conda-env", ".tools", "build", "dist"]
+warn_unreachable = true
+show_error_codes = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "--strict-config --strict-markers -ra"
+markers = [
+    "billing_contract: independent M1 contract tests awaiting M5 implementation",
+    "integration: explicitly isolated remote-database tests, never production",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["clinic_management", "tests.support"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 80
+exclude_also = ["if TYPE_CHECKING:", "^\\s*\\.\\.\\.$"]
+
+[tool.pylint.main]
+ignore-paths = ["^\\.conda-env/", "^\\.tools/"]
+
+[tool.pylint.messages_control]
+disable = ["all"]
+enable = ["duplicate-code"]
+
+[tool.pylint.similarities]
+min-similarity-lines = 40
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = true
+
+[tool.deptry]
+requirements_files = ["requirements.txt"]
+requirements_files_dev = ["requirements-dev.txt"]
+known_first_party = ["clinic_management", "scripts", "tests"]
+extend_exclude = [".conda-env", ".tools", "build", "dist"]
