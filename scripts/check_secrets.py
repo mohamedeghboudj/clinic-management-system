@@ -1,4 +1,4 @@
-"""Scan maintained text without printing candidate secret values."""
+"""Scan maintained text and report only a candidate count to CI."""
 
 from pathlib import Path
 
@@ -15,15 +15,15 @@ def main() -> int:
     Returns:
         Zero if no candidate secrets are found, otherwise one.
     """
-    collector = SecretsCollection()
+    secrets = SecretsCollection()
     with default_settings():
         for path in project_files(Path.cwd().resolve()):
             if path.name == "requirements-dev.txt" or path.suffix in {".png", ".pdf", ".ico"}:
                 continue
             if path.name.startswith((".coverage", "coverage.")):
                 continue
-            collector.scan_file(str(path))
-    findings = list(collector)
+            secrets.scan_file(str(path))
+    findings = list(secrets)
     print(f"Secret scan: {len(findings)} candidate(s)")
     return int(bool(findings))
 
