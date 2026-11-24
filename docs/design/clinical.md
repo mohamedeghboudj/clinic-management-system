@@ -38,6 +38,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Concurrency, Transactions & Security:**
   * Read-only projection queries; no row-level locking needed.
   * Access policy checks caller's assignment to the patient before returning clinical summaries.
+  * **Clinic-Scoped Queries & Pagination Isolation:** Every clinical query and pagination filter enforces strict tenant isolation by mandating `WHERE clinic_id = :clinic_id AND patient_id = :patient_id` at the database persistence layer. Paging uses deterministic, index-backed cursor pagination ordered by `(recorded_at DESC, id DESC)`. Query parameters are validated against bounds (`1 <= limit <= 100`, opaque ASCII cursor `<= 2048` chars), preventing cross-tenant leakage or unbounded memory dumps.
 * **Examples:**
   * *Normal:* Querying page 1 (limit 25) of clinical entries for patient `P-101` returns 12 summaries with continuation cursor `None`.
   * *Invalid:* Requesting page with limit 150 raises `ValidationError(code="INVALID_VALUE", message_key="paging.limit.invalid")`.
@@ -143,6 +144,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
   * `PermissionDeniedError(code="ATTACHMENT_NOT_CLEAN", message_key="attachment.quarantined")`
 * **Concurrency, Transactions & Security:**
   * Binary files downloaded only through short-lived presigned URLs after authorization verification.
+  * **Signed Attachment-Link Expiry Policy:** Presigned S3/Supabase storage download URLs generated for `AttachmentMetadata` have an enforced maximum time-to-live (TTL) of **15 minutes (900 seconds)**. URLs are single-purpose, cryptographically signed, and dynamically generated on verified `Permission.CLINICAL_READ` access; they are never persisted in the database or exposed in static DTOs. Expired links require re-authentication and emit an audit event.
   * Audit log entry created on every download request.
 * **Examples:**
   * *Normal:* Clean PDF attachment of 2.4 MB with SHA-256 digest verified.
@@ -213,6 +215,11 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
   * `ConflictError(code="RESOURCE_CONFLICT", message_key="surgery.room_unavailable")`
 * **Concurrency, Transactions & Security:**
   * Atomic transaction releases or claims doctor, room, and equipment reservations together with surgical state.
+  * **Surgery Reservation Lock Ordering Protocol:** To eliminate distributed deadlocks across service boundaries when claiming or cancelling multi-resource reservations in M3, locks MUST be acquired in strict deterministic hierarchical order:
+    1. **Doctor Availability Lock:** Verify and lock lead surgeon and clinical team availability.
+    2. **Operating Room Lock:** Lock the specific operating room / theatre asset.
+    3. **Equipment Lock:** Lock high-value surgical machinery / specialized instrument kits in lexicographical order of `equipment_id`.
+    * If any reservation in the chain fails or conflicts, all previously acquired reservations MUST be immediately released (atomic all-or-nothing rollback), and a `ConflictError(code="RESOURCE_CONFLICT", ...)` returned without partial resource claims.
 * **Examples:**
   * *Normal:* Appendectomy with lead surgeon, anesthesiologist, and scrub nurse transitioning `PLANNED` → `IN_PROGRESS` → `COMPLETED`.
   * *Invalid:* Attempting to start a surgery that has already been cancelled raises `InvalidTransitionError`.
@@ -248,6 +255,12 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
   * `ValidationError(code="INVALID_VALUE", message_key="lab.result.invalid_numeric_value")`
 * **Concurrency, Transactions & Security:**
   * Only staff with laboratory role can enter results; a distinct licensed clinician must validate results.
+  * **Preservation of Original Values and Validation Provenance on Amendment:** Validated lab results are strictly immutable. Any typographical, calibration, or instrument re-test correction MUST NOT overwrite or mutate the existing `LabResult` row. Corrections require an appended `LabResultAmendment` entity referencing the target result ID, preserving:
+    - The original raw `value`, unit, and reference interval text in the audit log.
+    - The original recording staff ID, validator clinician ID, and validation UTC timestamp.
+    - The mandatory non-empty clinical justification `reason: str` (max 2,000 characters).
+    - The new corrected value, new validator ID, and UTC amendment timestamp.
+    - Read models and UI views render the latest amendment by default with a visible "Amended" indicator linking back to the historical provenance.
 * **Examples:**
   * *Normal:* Fasting blood glucose ordered, collected, resulted at `5.8 mmol/L` (reference `3.9 - 6.1`), and validated.
   * *Invalid:* Marking an order collected without items raises `ValidationError`.
@@ -365,3 +378,20 @@ class ConsultationDetail:
 | S5: Billable consultation items retain catalogue prices | `ServiceCatalogItem` | Section 2.5 | `CreateInvoiceFromServices` |
 | Future surgical workflows and operating room reservations | — | Section 2.6 | `ScheduleSurgery` |
 | Future laboratory orders and validated results | — | Section 2.7 | `OrderLabTests`, `ValidateLabResult` |
+
+---
+
+## 5. Deferred Backlog Tracking & Issue Mapping
+
+Deferred clinical components and integration requirements are mapped to project backlog issues and milestones:
+
+| Backlog Tracker | Scope & Milestone | Key Design Invariants & Dependencies |
+|---|---|---|
+| `#CLIN-01` | Sprint 2: MedicalRecord & History Query Service | Clinic-scoped SQL queries (`WHERE clinic_id = :clinic_id`), forward cursor pagination (`recorded_at DESC, id DESC`), narrative omission in `ClinicalEntrySummary`. |
+| `#CLIN-02` | Sprint 2: Allergy Safety & Clinical Alerts | Active/resolved status lifecycle, `ENTERED_IN_ERROR` audit tombstone, pre-prescribing cross-check with M4 `PrescriptionItem`. |
+| `#CLIN-03` | Sprint 2: Treatment Plans & Goal Tracking | `ended_on >= started_on` date invariants, doctor authorization for completion/cancellation. |
+| `#CLIN-04` | Sprint 3: Cloud Binary Attachments Adapter | S3/Supabase presigned URL TTL <= 15 minutes, SHA-256 integrity validation, quarantine state machine (`PENDING` -> `CLEAN`/`INFECTED`). |
+| `#CLIN-05` | Sprint 2: Operating Room & Minor Procedures | Procedural catalog code uniqueness per clinic, M4 `ServiceCatalogItem` billing linkage. |
+| `#CLIN-06` | Sprint 3: Surgery Scheduling & Team Orchestration | Deterministic reservation lock ordering (Doctor -> Operating Room -> Equipment) across M3 boundary, deadlock-free rollback on conflict. |
+| `#CLIN-07` | Sprint 3: Laboratory Orders & Result Amendments | Distinct technician entry and clinician validation roles, immutable lab result correction audit trails via `LabResultAmendment`. |
+| [Issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4) | Cross-functional Clinic Integration Handoff | Coordinates integration of M4 clinical aggregates with M1 Unit of Work outbox events, M2 permissions, and M3 appointments. |
