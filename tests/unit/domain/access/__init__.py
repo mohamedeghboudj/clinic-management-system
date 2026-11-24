@@ -1,2 +1,1 @@
-"""Tests for access domain: enums, grants, memberships, accounts, principals, policy, audit, sessions."""
-
+"""Tests for access domain: accounts, grants, memberships, policy, and sessions."""

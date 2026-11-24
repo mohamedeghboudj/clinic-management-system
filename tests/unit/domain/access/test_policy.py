@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -12,10 +12,10 @@ from clinic_management.domain.access.policy import AccessPolicy, ResourceContext
 from clinic_management.domain.access.principal import Principal
 from clinic_management.domain.shared.errors import PermissionDeniedError, ValidationError
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_grant(
     role: Role = Role.DOCTOR,
@@ -23,6 +23,7 @@ def _make_grant(
     scope: AccessScope = AccessScope.CLINIC,
     fields: frozenset[str] | None = None,
 ) -> RoleGrant:
+    """Create a RoleGrant for testing."""
     return RoleGrant(
         role=role,
         permission=permission,
@@ -32,12 +33,13 @@ def _make_grant(
 
 
 def _make_principal(
-    clinic_id=None,
-    roles=None,
-    staff_id=None,
-    patient_id=None,
-    auth_version=1,
+    clinic_id: UUID | None = None,
+    roles: frozenset[Role] | None = None,
+    staff_id: UUID | None = None,
+    patient_id: UUID | None = None,
+    auth_version: int = 1,
 ) -> Principal:
+    """Create a Principal for testing."""
     if clinic_id is None:
         clinic_id = uuid4()
     return Principal(
@@ -52,24 +54,28 @@ def _make_principal(
 
 
 def _make_resource(
-    clinic_id=None,
-    patient_id=None,
-    assigned_staff_ids=None,
-    available_fields=None,
+    clinic_id: UUID | None = None,
+    patient_id: UUID | None = None,
+    assigned_staff_ids: frozenset[UUID] | None = None,
+    available_fields: frozenset[str] | None = None,
 ) -> ResourceContext:
+    """Create a ResourceContext for testing."""
     if clinic_id is None:
         clinic_id = uuid4()
     return ResourceContext(
         clinic_id=clinic_id,
         patient_id=patient_id,
         assigned_staff_ids=assigned_staff_ids or frozenset(),
-        available_fields=available_fields if available_fields is not None else frozenset({"name", "dob"}),
+        available_fields=(
+            available_fields if available_fields is not None else frozenset({"name", "dob"})
+        ),
     )
 
 
 # ---------------------------------------------------------------------------
 # Construction tests
 # ---------------------------------------------------------------------------
+
 
 class TestAccessPolicyConstruction:
     """Tests for AccessPolicy construction validation."""
@@ -99,6 +105,7 @@ class TestAccessPolicyConstruction:
 # require() tests — positive (allowed)
 # ---------------------------------------------------------------------------
 
+
 class TestAccessPolicyRequireAllowed:
     """Tests for AccessPolicy.require() — cases that should be permitted."""
 
@@ -114,9 +121,7 @@ class TestAccessPolicyRequireAllowed:
         """An ASSIGNED-scope grant permits access when staff is in assigned_staff_ids."""
         clinic_id = uuid4()
         staff_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(scope=AccessScope.ASSIGNED),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(scope=AccessScope.ASSIGNED),))
         principal = _make_principal(clinic_id=clinic_id, staff_id=staff_id)
         resource = _make_resource(
             clinic_id=clinic_id,
@@ -128,12 +133,8 @@ class TestAccessPolicyRequireAllowed:
         """An OWN-scope grant permits access when patient_id matches."""
         clinic_id = uuid4()
         patient_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(scope=AccessScope.OWN),)
-        )
-        principal = _make_principal(
-            clinic_id=clinic_id, patient_id=patient_id
-        )
+        policy = AccessPolicy(grants=(_make_grant(scope=AccessScope.OWN),))
+        principal = _make_principal(clinic_id=clinic_id, patient_id=patient_id)
         resource = _make_resource(clinic_id=clinic_id, patient_id=patient_id)
         policy.require(principal, Permission.PATIENT_READ, resource)
 
@@ -151,6 +152,7 @@ class TestAccessPolicyRequireAllowed:
 # ---------------------------------------------------------------------------
 # require() tests — negative (denied)
 # ---------------------------------------------------------------------------
+
 
 class TestAccessPolicyRequireDenied:
     """Tests for AccessPolicy.require() — cases that must be denied."""
@@ -176,9 +178,7 @@ class TestAccessPolicyRequireDenied:
     def test_wrong_permission_is_denied(self) -> None:
         """Requesting PATIENT_WRITE when only PATIENT_READ is granted is denied."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(permission=Permission.PATIENT_READ),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(permission=Permission.PATIENT_READ),))
         principal = _make_principal(clinic_id=clinic_id)
         resource = _make_resource(clinic_id=clinic_id)
         with pytest.raises(PermissionDeniedError):
@@ -187,9 +187,7 @@ class TestAccessPolicyRequireDenied:
     def test_wrong_role_is_denied(self) -> None:
         """Principal with NURSE role denied when only DOCTOR role has grant."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(role=Role.DOCTOR),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(role=Role.DOCTOR),))
         principal = _make_principal(clinic_id=clinic_id, roles=frozenset({Role.NURSE}))
         resource = _make_resource(clinic_id=clinic_id)
         with pytest.raises(PermissionDeniedError):
@@ -200,9 +198,7 @@ class TestAccessPolicyRequireDenied:
         clinic_id = uuid4()
         staff_id = uuid4()
         other_staff_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(scope=AccessScope.ASSIGNED),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(scope=AccessScope.ASSIGNED),))
         principal = _make_principal(clinic_id=clinic_id, staff_id=staff_id)
         resource = _make_resource(
             clinic_id=clinic_id,
@@ -214,9 +210,7 @@ class TestAccessPolicyRequireDenied:
     def test_own_scope_denied_when_patient_id_mismatches(self) -> None:
         """OWN-scope grant denied when patient_id does not match."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(scope=AccessScope.OWN),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(scope=AccessScope.OWN),))
         principal = _make_principal(clinic_id=clinic_id, patient_id=uuid4())
         resource = _make_resource(clinic_id=clinic_id, patient_id=uuid4())
         with pytest.raises(PermissionDeniedError):
@@ -234,13 +228,9 @@ class TestAccessPolicyRequireDenied:
     def test_assigned_scope_denied_when_staff_id_is_none(self) -> None:
         """ASSIGNED-scope denied when the principal has no staff_id."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(scope=AccessScope.ASSIGNED),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(scope=AccessScope.ASSIGNED),))
         principal = _make_principal(clinic_id=clinic_id, staff_id=None)
-        resource = _make_resource(
-            clinic_id=clinic_id, assigned_staff_ids=frozenset({uuid4()})
-        )
+        resource = _make_resource(clinic_id=clinic_id, assigned_staff_ids=frozenset({uuid4()}))
         with pytest.raises(PermissionDeniedError):
             policy.require(principal, Permission.PATIENT_READ, resource)
 
@@ -249,17 +239,14 @@ class TestAccessPolicyRequireDenied:
 # allowed_fields() tests
 # ---------------------------------------------------------------------------
 
+
 class TestAccessPolicyAllowedFields:
     """Tests for AccessPolicy.allowed_fields()."""
 
     def test_returns_intersection_of_grant_and_available_fields(self) -> None:
         """Only fields both authorised and available are returned."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(
-                _make_grant(fields=frozenset({"name", "dob", "phone"})),
-            )
-        )
+        policy = AccessPolicy(grants=(_make_grant(fields=frozenset({"name", "dob", "phone"})),))
         principal = _make_principal(clinic_id=clinic_id)
         resource = _make_resource(
             clinic_id=clinic_id,
@@ -271,9 +258,7 @@ class TestAccessPolicyAllowedFields:
     def test_empty_grant_fields_returns_empty(self) -> None:
         """A grant with empty fields returns no authorised fields."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(fields=frozenset()),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(fields=frozenset()),))
         principal = _make_principal(clinic_id=clinic_id)
         resource = _make_resource(clinic_id=clinic_id)
         fields = policy.allowed_fields(principal, Permission.PATIENT_READ, resource)
@@ -282,9 +267,7 @@ class TestAccessPolicyAllowedFields:
     def test_unmatched_grant_returns_empty_fields(self) -> None:
         """When no grant matches, no fields are returned."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(permission=Permission.PATIENT_WRITE),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(permission=Permission.PATIENT_WRITE),))
         principal = _make_principal(clinic_id=clinic_id)
         resource = _make_resource(clinic_id=clinic_id)
         fields = policy.allowed_fields(principal, Permission.PATIENT_READ, resource)
@@ -313,9 +296,7 @@ class TestAccessPolicyAllowedFields:
     def test_fields_not_in_available_are_excluded(self) -> None:
         """Fields authorised by grant but absent from available_fields are excluded."""
         clinic_id = uuid4()
-        policy = AccessPolicy(
-            grants=(_make_grant(fields=frozenset({"name", "ssn"})),)
-        )
+        policy = AccessPolicy(grants=(_make_grant(fields=frozenset({"name", "ssn"})),))
         principal = _make_principal(clinic_id=clinic_id)
         resource = _make_resource(
             clinic_id=clinic_id,
@@ -324,4 +305,3 @@ class TestAccessPolicyAllowedFields:
         fields = policy.allowed_fields(principal, Permission.PATIENT_READ, resource)
         assert "ssn" not in fields
         assert "name" in fields
-

@@ -1,1 +1,1 @@
-﻿"""Use cases, boundary contracts and replaceable dependency ports."""
+"""Use cases, boundary contracts and replaceable dependency ports."""

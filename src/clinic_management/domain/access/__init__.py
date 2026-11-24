@@ -1,4 +1,4 @@
-﻿"""M2 accounts, grants and immutable audit records.
+"""M2 accounts, grants and immutable audit records.
 
 The AuditEntry entity satisfies the M1 AuditRecord protocol structurally.
 """

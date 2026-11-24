@@ -52,4 +52,3 @@ class TestRequireNonEmpty:
         assert exc_info.value.code == "INVALID_VALUE"
         assert exc_info.value.message_key == "validation.type_error"
         assert exc_info.value.safe_details["field"] == "title"
-

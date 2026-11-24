@@ -135,4 +135,3 @@ class ClinicMembership(Entity):
                 safe_details={"membership_id": str(self.id)},
             )
         self.active = False
-

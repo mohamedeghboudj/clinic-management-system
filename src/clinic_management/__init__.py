@@ -1,1 +1,1 @@
-﻿"""Clinic management application with independent domain and adapter layers."""
+"""Clinic management application with independent domain and adapter layers."""

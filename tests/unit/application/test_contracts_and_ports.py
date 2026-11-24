@@ -1,4 +1,4 @@
-"""Unit tests for Application contracts and ports (DTOs, interfaces, pagination)."""
+"""Unit tests for Application contracts and ports (DTOs, interfaces, paging)."""
 
 from __future__ import annotations
 
@@ -8,17 +8,17 @@ from uuid import uuid4
 import pytest
 
 from clinic_management.application.contracts.access import AuthenticatedSession
+from clinic_management.application.contracts.paging import Page, PageRequest
 from clinic_management.application.contracts.people import PatientSummary
-from clinic_management.application.ports.pagination import Page, PageRequest
-from clinic_management.application.ports.passwords import PasswordHasher
+from clinic_management.application.ports.accounts import AccountRepository
 from clinic_management.application.ports.identity_provider import IdentityProvider
-from clinic_management.application.ports.repositories import (
-    AccountRepository,
+from clinic_management.application.ports.passwords import PasswordHasher
+from clinic_management.application.ports.people import (
     PatientRepository,
     PersonRepository,
-    SessionRepository,
     StaffRepository,
 )
+from clinic_management.application.ports.sessions import SessionRepository
 from clinic_management.domain.access.enums import Role
 from clinic_management.domain.access.principal import Principal
 from clinic_management.domain.shared.errors import ValidationError
@@ -28,6 +28,7 @@ class TestAuthenticatedSessionDTO:
     """Tests for AuthenticatedSession DTO."""
 
     def _make_principal(self) -> Principal:
+        """Create a valid Principal instance for testing."""
         return Principal(
             account_id=uuid4(),
             clinic_id=uuid4(),
@@ -160,30 +161,62 @@ class TestPatientSummaryDTO:
             )
 
 
-class TestPaginationPort:
-    """Tests for PageRequest and Page pagination structures."""
+class TestPaginationContract:
+    """Tests for shared cursor-based PageRequest and Page contract."""
 
-    def test_page_request_valid(self) -> None:
-        """PageRequest validates positive page and page_size."""
-        pr = PageRequest(page=1, page_size=20)
-        assert pr.page == 1
-        assert pr.page_size == 20
+    def test_page_request_defaults(self) -> None:
+        """PageRequest provides default limit 25 and None cursor."""
+        pr = PageRequest()
+        assert pr.limit == 25
+        assert pr.cursor is None
 
-    def test_page_request_invalid(self) -> None:
-        """Invalid page numbers raise ValidationError."""
+    def test_page_request_custom(self) -> None:
+        """PageRequest validates valid limit and ASCII printable cursor."""
+        pr = PageRequest(limit=50, cursor="cursor-token-123")
+        assert pr.limit == 50
+        assert pr.cursor == "cursor-token-123"
+
+    def test_page_request_invalid_limits(self) -> None:
+        """Invalid limits (out of 1..100 or non-int) raise ValidationError."""
         with pytest.raises(ValidationError):
-            PageRequest(page=0, page_size=10)
+            PageRequest(limit=0)
         with pytest.raises(ValidationError):
-            PageRequest(page=1, page_size=0)
+            PageRequest(limit=101)
+        with pytest.raises(ValidationError):
+            PageRequest(limit=-1)
 
-    def test_page_computation(self) -> None:
-        """Page calculates total_pages and has_next correctly."""
-        page = Page(items=(1, 2, 3), total=10, page=1, page_size=3)
-        assert page.total_pages == 4
-        assert page.has_next is True
+    def test_page_request_malformed_cursor(self) -> None:
+        """Empty, non-ASCII, non-printable, or overly long cursors raise ValidationError."""
+        with pytest.raises(ValidationError):
+            PageRequest(cursor="")
+        with pytest.raises(ValidationError):
+            PageRequest(cursor="invalid whitespace cursor")
+        with pytest.raises(ValidationError):
+            PageRequest(cursor="bad\x00char")
+        with pytest.raises(ValidationError):
+            PageRequest(cursor="a" * 2049)
 
-        last_page = Page(items=(10,), total=10, page=4, page_size=3)
-        assert last_page.has_next is False
+    def test_page_immutable_container(self) -> None:
+        """Page requires an immutable tuple container and enforces MAX_PAGE_SIZE."""
+        with pytest.raises(ValidationError):
+            Page(items=[1, 2, 3], next_cursor=None)  # type: ignore[arg-type]
+        with pytest.raises(ValidationError):
+            Page(items=tuple(range(101)), next_cursor=None)
+
+    def test_page_has_next_and_continuation_cursor(self) -> None:
+        """Page has_next reflects continuation cursor presence correctly."""
+        page_with_next = Page(items=(1, 2, 3), next_cursor="next-ptr-99")
+        assert page_with_next.has_next() is True
+        assert page_with_next.next_cursor == "next-ptr-99"
+
+        terminal_page = Page(items=(1, 2, 3), next_cursor=None)
+        assert terminal_page.has_next() is False
+        assert terminal_page.next_cursor is None
+
+    def test_page_validates_next_cursor_shape(self) -> None:
+        """Page validates that next_cursor adheres to cursor rules."""
+        with pytest.raises(ValidationError):
+            Page(items=(1, 2), next_cursor="bad space cursor")
 
 
 class TestPortsAreAbstract:
@@ -211,4 +244,3 @@ class TestPortsAreAbstract:
 
         with pytest.raises(TypeError):
             SessionRepository()  # type: ignore[abstract]
-

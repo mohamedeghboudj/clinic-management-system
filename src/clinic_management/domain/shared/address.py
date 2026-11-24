@@ -71,4 +71,3 @@ class Address:
         object.__setattr__(self, "country_code", upper_country)
         object.__setattr__(self, "region", clean_region)
         object.__setattr__(self, "postal_code", clean_postal)
-

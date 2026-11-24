@@ -14,30 +14,55 @@ from clinic_management.domain.shared.errors import (
     ValidationError,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_membership(**kwargs) -> ClinicMembership:
-    defaults = dict(
-        id=uuid4(),
-        account_id=uuid4(),
-        clinic_id=uuid4(),
+
+def _make_membership(
+    id: object = None,
+    account_id: object = None,
+    clinic_id: object = None,
+    staff_id: object = None,
+    patient_id: object = None,
+    version: object = 0,
+    roles: object = None,
+    active: object = True,
+) -> ClinicMembership:
+    """Create a ClinicMembership for testing."""
+    return ClinicMembership(
+        id=id if id is not None else uuid4(),  # type: ignore[arg-type]
+        account_id=account_id if account_id is not None else uuid4(),  # type: ignore[arg-type]
+        clinic_id=clinic_id if clinic_id is not None else uuid4(),  # type: ignore[arg-type]
+        staff_id=staff_id,  # type: ignore[arg-type]
+        patient_id=patient_id,  # type: ignore[arg-type]
+        version=version,  # type: ignore[arg-type]
+        roles=roles if roles is not None else frozenset(),  # type: ignore[arg-type]
+        active=active,  # type: ignore[arg-type]
     )
-    defaults.update(kwargs)
-    return ClinicMembership(**defaults)
 
 
-def _make_account(**kwargs) -> UserAccount:
-    defaults = dict(
-        id=uuid4(),
-        person_id=uuid4(),
-        username="drsmith",
-        password_hash="$argon2id$v=19$m=65536,t=3,p=1$abc$xyz",
+def _make_account(
+    id: object = None,
+    person_id: object = None,
+    username: object = "drsmith",
+    password_hash: object = None,
+    enabled: object = True,
+    auth_version: object = 1,
+    version: object = 0,
+) -> UserAccount:
+    """Create a UserAccount for testing."""
+    if password_hash is None:
+        password_hash = "$argon2id$v=19$m=65536,t=3,p=1$abc$xyz"
+    return UserAccount(
+        id=id if id is not None else uuid4(),  # type: ignore[arg-type]
+        person_id=person_id if person_id is not None else uuid4(),  # type: ignore[arg-type]
+        username=username,  # type: ignore[arg-type]
+        password_hash=password_hash,  # type: ignore[arg-type]
+        enabled=enabled,  # type: ignore[arg-type]
+        auth_version=auth_version,  # type: ignore[arg-type]
+        version=version,  # type: ignore[arg-type]
     )
-    defaults.update(kwargs)
-    return UserAccount(**defaults)
 
 
 # ---------------------------------------------------------------------------
@@ -79,27 +104,27 @@ class TestClinicMembershipConstruction:
     def test_non_int_version_raises(self) -> None:
         """Float version is rejected."""
         with pytest.raises(ValidationError):
-            _make_membership(version=1.0)  # type: ignore[arg-type]
+            _make_membership(version=1.0)
 
     def test_non_uuid_account_id_raises(self) -> None:
         """String account_id is rejected."""
         with pytest.raises(ValidationError):
-            _make_membership(account_id="not-a-uuid")  # type: ignore[arg-type]
+            _make_membership(account_id="not-a-uuid")
 
     def test_non_bool_active_raises(self) -> None:
         """Integer 1 used for active is rejected."""
         with pytest.raises(ValidationError):
-            _make_membership(active=1)  # type: ignore[arg-type]
+            _make_membership(active=1)
 
     def test_roles_with_non_role_member_raises(self) -> None:
         """Passing a string in roles is rejected."""
         with pytest.raises(ValidationError):
-            _make_membership(roles=frozenset({"DOCTOR"}))  # type: ignore[arg-type]
+            _make_membership(roles=frozenset({"DOCTOR"}))
 
     def test_roles_as_list_raises(self) -> None:
         """Passing a list instead of frozenset for roles is rejected."""
         with pytest.raises(ValidationError):
-            _make_membership(roles=[Role.DOCTOR])  # type: ignore[arg-type]
+            _make_membership(roles=[Role.DOCTOR])
 
 
 class TestClinicMembershipGrantRevoke:
@@ -204,7 +229,7 @@ class TestUserAccountConstruction:
     def test_non_bool_enabled_raises(self) -> None:
         """Integer used for enabled is rejected."""
         with pytest.raises(ValidationError):
-            _make_account(enabled=1)  # type: ignore[arg-type]
+            _make_account(enabled=1)
 
     def test_password_hash_not_in_repr(self) -> None:
         """The password_hash must not appear in the repr."""
@@ -277,11 +302,10 @@ class TestUserAccountPasswordAndSession:
         assert acct.auth_version == v0 + 2
 
     def test_disable_then_enable_version_incremented_once(self) -> None:
-        """disable bumps auth_version; enable does not."""
+        """Disable bumps auth_version; enable does not."""
         acct = _make_account()
         v0 = acct.auth_version
         acct.disable()
         assert acct.auth_version == v0 + 1
         acct.enable()
         assert acct.auth_version == v0 + 1
-

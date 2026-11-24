@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
@@ -219,13 +219,13 @@ class TestStaffProfileTransitions:
         assert profile.active is True
 
         profile.deactivate()
-        assert profile.active is False
+        assert bool(profile.active) is False
 
         profile.activate()
-        assert profile.active is True
+        assert bool(profile.active) is True
 
         profile.deactivate()
-        assert profile.active is False
+        assert bool(profile.active) is False
 
 
 class TestStaffProfileEntityIdentity:
@@ -284,4 +284,3 @@ class TestStaffProfileEntityIdentity:
         )
         with pytest.raises(TypeError, match="unhashable"):
             hash(profile)
-

@@ -90,4 +90,3 @@ class IdentityProvider(abc.ABC):
             NotFoundError: If no session with the given ID exists.
             AuthenticationError: If the session is already revoked.
         """
-

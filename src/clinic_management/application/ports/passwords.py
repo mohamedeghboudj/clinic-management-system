@@ -58,4 +58,3 @@ class PasswordHasher(abc.ABC):
             True if the hash parameters are outdated and the account should be
             rehashed on next successful login.
         """
-

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta, timezone
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
@@ -281,21 +281,21 @@ class TestPatientLifecycleTransitions:
 
         # First cycle
         patient.archive(at=t1)
-        assert patient.is_active() is False
-        assert patient.archived_at == t1
+        assert bool(patient.is_active()) is False
+        assert (patient.archived_at == t1) is True
 
         patient.restore()
-        assert patient.is_active() is True
-        assert patient.archived_at is None
+        assert bool(patient.is_active()) is True
+        assert (patient.archived_at is None) is True
 
         # Second cycle
         patient.archive(at=t2)
-        assert patient.is_active() is False
-        assert patient.archived_at == t2
+        assert bool(patient.is_active()) is False
+        assert (patient.archived_at == t2) is True
 
         patient.restore()
-        assert patient.is_active() is True
-        assert patient.archived_at is None
+        assert bool(patient.is_active()) is True
+        assert (patient.archived_at is None) is True
 
 
 class TestPatientEntityIdentity:
@@ -333,4 +333,3 @@ class TestPatientEntityIdentity:
         )
         with pytest.raises(TypeError, match="unhashable"):
             hash(patient)
-

@@ -68,4 +68,3 @@ class AuditEntry:
 
         if self.reason_code is not None:
             require_non_empty(self.reason_code, field="reason_code", max_length=200)
-

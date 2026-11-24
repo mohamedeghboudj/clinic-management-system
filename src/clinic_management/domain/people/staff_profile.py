@@ -60,7 +60,7 @@ class StaffProfile(Entity):
             max_length=50,
         )
 
-        if not isinstance(self.hired_on, date) or isinstance(self.hired_on, bool):
+        if type(self.hired_on) is not date:
             raise ValidationError(
                 code="INVALID_VALUE",
                 message_key="staff.hired_on.invalid",
@@ -103,4 +103,3 @@ class StaffProfile(Entity):
                 safe_details={"staff_id": str(self.id)},
             )
         self.active = False
-

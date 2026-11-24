@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -11,36 +11,47 @@ from clinic_management.domain.access.policy import ResourceContext
 from clinic_management.domain.access.principal import Principal
 from clinic_management.domain.shared.errors import ValidationError
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_principal(**kwargs) -> Principal:
-    defaults = dict(
-        account_id=uuid4(),
-        clinic_id=uuid4(),
-        membership_id=uuid4(),
-        staff_id=None,
-        patient_id=None,
-        roles=frozenset({Role.DOCTOR}),
-        auth_version=1,
+
+def _make_principal(
+    account_id: object = None,
+    clinic_id: object = None,
+    membership_id: object = None,
+    staff_id: object = None,
+    patient_id: object = None,
+    roles: object = None,
+    auth_version: object = 1,
+) -> Principal:
+    """Create a Principal for testing."""
+    return Principal(
+        account_id=account_id if account_id is not None else uuid4(),  # type: ignore[arg-type]
+        clinic_id=clinic_id if clinic_id is not None else uuid4(),  # type: ignore[arg-type]
+        membership_id=membership_id if membership_id is not None else uuid4(),  # type: ignore[arg-type]
+        staff_id=staff_id,  # type: ignore[arg-type]
+        patient_id=patient_id,  # type: ignore[arg-type]
+        roles=roles if roles is not None else frozenset({Role.DOCTOR}),  # type: ignore[arg-type]
+        auth_version=auth_version,  # type: ignore[arg-type]
     )
-    defaults.update(kwargs)
-    return Principal(**defaults)
 
 
-def _make_resource(clinic_id=None, **kwargs) -> ResourceContext:
-    if clinic_id is None:
-        clinic_id = uuid4()
-    defaults = dict(
-        clinic_id=clinic_id,
-        patient_id=None,
-        assigned_staff_ids=frozenset(),
-        available_fields=frozenset({"name", "dob"}),
+def _make_resource(
+    clinic_id: UUID | None = None,
+    patient_id: UUID | None = None,
+    assigned_staff_ids: frozenset[UUID] | None = None,
+    available_fields: frozenset[str] | None = None,
+) -> ResourceContext:
+    """Create a ResourceContext for testing."""
+    return ResourceContext(
+        clinic_id=clinic_id if clinic_id is not None else uuid4(),
+        patient_id=patient_id,
+        assigned_staff_ids=assigned_staff_ids or frozenset(),
+        available_fields=(
+            available_fields if available_fields is not None else frozenset({"name", "dob"})
+        ),
     )
-    defaults.update(kwargs)
-    return ResourceContext(**defaults)
 
 
 # ---------------------------------------------------------------------------
@@ -88,17 +99,17 @@ class TestPrincipalConstruction:
     def test_non_uuid_account_id_raises(self) -> None:
         """String used as account_id is rejected."""
         with pytest.raises(ValidationError):
-            _make_principal(account_id="not-a-uuid")  # type: ignore[arg-type]
+            _make_principal(account_id="not-a-uuid")
 
     def test_non_role_in_roles_raises(self) -> None:
         """A string in the roles frozenset is rejected."""
         with pytest.raises(ValidationError):
-            _make_principal(roles=frozenset({"DOCTOR"}))  # type: ignore[arg-type]
+            _make_principal(roles=frozenset({"DOCTOR"}))
 
     def test_non_frozenset_roles_raises(self) -> None:
         """A list used for roles is rejected."""
         with pytest.raises(ValidationError):
-            _make_principal(roles=[Role.DOCTOR])  # type: ignore[arg-type]
+            _make_principal(roles=[Role.DOCTOR])
 
     def test_has_role_true(self) -> None:
         """has_role returns True for a role in the set."""
@@ -170,4 +181,3 @@ class TestResourceContextConstruction:
                 assigned_staff_ids=frozenset(),
                 available_fields=["name"],  # type: ignore[arg-type]
             )
-

@@ -40,12 +40,17 @@ class TestPermissionEnum:
     def test_all_fourteen_permissions_exist(self) -> None:
         """All fourteen documented permissions must be present."""
         expected = {
-            "PATIENT_READ", "PATIENT_WRITE",
-            "APPOINTMENT_READ", "APPOINTMENT_WRITE",
-            "CLINICAL_READ", "CLINICAL_WRITE",
+            "PATIENT_READ",
+            "PATIENT_WRITE",
+            "APPOINTMENT_READ",
+            "APPOINTMENT_WRITE",
+            "CLINICAL_READ",
+            "CLINICAL_WRITE",
             "PRESCRIBE",
-            "BILLING_READ", "BILLING_WRITE",
-            "PAYMENT_RECORD", "PAYMENT_REVERSE",
+            "BILLING_READ",
+            "BILLING_WRITE",
+            "PAYMENT_RECORD",
+            "PAYMENT_REVERSE",
             "FINANCE_REPORT",
             "STAFF_MANAGE",
             "ROLE_MANAGE",
@@ -87,6 +92,7 @@ class TestRoleGrant:
         scope: AccessScope = AccessScope.CLINIC,
         fields: frozenset[str] | None = None,
     ) -> RoleGrant:
+        """Create a RoleGrant instance for testing."""
         return RoleGrant(
             role=role,
             permission=permission,
@@ -185,4 +191,3 @@ class TestRoleGrant:
         """A grant can carry multiple field names."""
         grant = self._make_grant(fields=frozenset({"name", "dob", "phone"}))
         assert len(grant.fields) == 3
-

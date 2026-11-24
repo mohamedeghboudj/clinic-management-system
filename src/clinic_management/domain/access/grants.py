@@ -67,4 +67,3 @@ class RoleGrant:
                     message_key="grant.fields.item_invalid",
                     safe_details={"field": "fields"},
                 )
-

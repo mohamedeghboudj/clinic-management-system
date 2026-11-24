@@ -22,14 +22,14 @@ def validate_birth_date(birth_date: date, *, reference_date: date) -> date:
         ValidationError: If birth_date or reference_date are not date instances,
             or if birth_date is after reference_date.
     """
-    if not isinstance(birth_date, date) or isinstance(birth_date, bool):
+    if type(birth_date) is not date:
         raise ValidationError(
             code="INVALID_VALUE",
             message_key="person.birth_date.invalid",
             safe_details={"field": "birth_date"},
         )
 
-    if not isinstance(reference_date, date) or isinstance(reference_date, bool):
+    if type(reference_date) is not date:
         raise ValidationError(
             code="INVALID_VALUE",
             message_key="person.reference_date.invalid",
@@ -83,4 +83,3 @@ def age_on(birth_date: date, *, on_date: date) -> int:
         years -= 1
 
     return years
-

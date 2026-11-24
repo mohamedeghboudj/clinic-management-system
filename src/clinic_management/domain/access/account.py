@@ -162,4 +162,3 @@ class UserAccount(Entity):
             None
         """
         self.auth_version += 1
-

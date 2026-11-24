@@ -121,4 +121,3 @@ class Session(Entity):
                 safe_details={"session_id": str(self.id)},
             )
         self.revoked_at = at
-

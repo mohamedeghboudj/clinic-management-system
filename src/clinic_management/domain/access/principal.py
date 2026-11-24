@@ -84,4 +84,3 @@ class Principal:
             True if the role is present in this principal's role set.
         """
         return role in self.roles
-

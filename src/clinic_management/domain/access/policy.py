@@ -175,10 +175,7 @@ class AccessPolicy:
         Returns:
             True if a matching grant exists, False otherwise.
         """
-        return any(
-            self._grant_matches(grant, principal, action, resource)
-            for grant in self.grants
-        )
+        return any(self._grant_matches(grant, principal, action, resource) for grant in self.grants)
 
     def _grant_matches(
         self,
@@ -248,8 +245,7 @@ class AccessPolicy:
             return True
         if scope is AccessScope.ASSIGNED:
             return (
-                principal.staff_id is not None
-                and principal.staff_id in resource.assigned_staff_ids
+                principal.staff_id is not None and principal.staff_id in resource.assigned_staff_ids
             )
         if scope is AccessScope.OWN:
             # Patient-facing own-access
@@ -261,8 +257,5 @@ class AccessPolicy:
                 return True
             # Staff-facing own-access (staff accessing their own assignment)
             return (
-                principal.staff_id is not None
-                and principal.staff_id in resource.assigned_staff_ids
+                principal.staff_id is not None and principal.staff_id in resource.assigned_staff_ids
             )
-        return False  # Unknown scope: deny
-

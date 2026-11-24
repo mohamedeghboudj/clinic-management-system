@@ -68,8 +68,4 @@ class AuthenticatedSession:
         Returns:
             A string with only the principal and expiry timestamp.
         """
-        return (
-            f"AuthenticatedSession(principal={self.principal!r}, "
-            f"expires_at={self.expires_at!r})"
-        )
-
+        return f"AuthenticatedSession(principal={self.principal!r}, expires_at={self.expires_at!r})"

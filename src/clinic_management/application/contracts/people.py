@@ -50,9 +50,7 @@ class PatientSummary:
                 message_key="patient_summary.display_name.invalid",
                 safe_details={"field": "display_name"},
             )
-        if self.phone is not None and (
-            not isinstance(self.phone, str) or not self.phone.strip()
-        ):
+        if self.phone is not None and (not isinstance(self.phone, str) or not self.phone.strip()):
             raise ValidationError(
                 code="INVALID_VALUE",
                 message_key="patient_summary.phone.invalid",
@@ -64,4 +62,3 @@ class PatientSummary:
                 message_key="patient_summary.version.invalid",
                 safe_details={"field": "version"},
             )
-

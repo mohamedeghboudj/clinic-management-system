@@ -57,4 +57,3 @@ class AccessScope(Enum):
     CLINIC = "CLINIC"
     ASSIGNED = "ASSIGNED"
     OWN = "OWN"
-

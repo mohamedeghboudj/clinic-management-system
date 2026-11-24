@@ -92,4 +92,3 @@ class TestAddress:
                 postal_code=code,
             )
             assert addr.postal_code == code
-

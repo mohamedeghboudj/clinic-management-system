@@ -1,1 +1,1 @@
-﻿"""Explicit application boundary values without framework dependencies."""
+"""Explicit application boundary values without framework dependencies."""

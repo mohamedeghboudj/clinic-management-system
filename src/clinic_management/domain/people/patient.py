@@ -118,4 +118,3 @@ class Patient(Entity):
             )
 
         self.archived_at = None
-

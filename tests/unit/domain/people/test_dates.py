@@ -114,4 +114,3 @@ class TestAgeOn:
         on = date(2019, 12, 31)
         with pytest.raises(ValidationError):
             age_on(birth, on_date=on)
-

@@ -1,1 +1,1 @@
-﻿"""Business concepts independent of databases, frameworks and presentation."""
+"""Business concepts independent of databases, frameworks and presentation."""

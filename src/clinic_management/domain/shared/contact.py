@@ -57,14 +57,45 @@ def validate_email(value: str) -> str:
     return stripped
 
 
+def _normalize_algerian_phone(cleaned: str) -> str:
+    """Normalize local Algerian phone numbers to E.164.
+
+    Args:
+        cleaned: Stripped digit string.
+
+    Returns:
+        E.164 string with leading +213.
+
+    Raises:
+        ValidationError: If format is invalid for DZ.
+    """
+    if cleaned.startswith("0") and len(cleaned) == 10 and cleaned.isdigit() and cleaned[1] != "0":
+        return "+213" + cleaned[1:]
+    if cleaned.startswith("213") and len(cleaned) == 12 and cleaned.isdigit() and cleaned[3] != "0":
+        return "+" + cleaned
+    if len(cleaned) == 9 and cleaned.isdigit() and cleaned[0] in "567":
+        return "+213" + cleaned
+    if cleaned.startswith("0"):
+        raise ValidationError(
+            code="INVALID_VALUE",
+            message_key="contact.phone.invalid",
+            safe_details={"field": "phone"},
+        )
+    candidate = "+" + cleaned
+    if _E164_PATTERN.match(candidate):
+        return candidate
+    raise ValidationError(
+        code="INVALID_VALUE",
+        message_key="contact.phone.invalid",
+        safe_details={"field": "phone"},
+    )
+
+
 def normalize_phone(value: str, region: str = "DZ") -> str:
     """Validate and normalize a phone number for the specified region.
 
     Strips whitespace, dashes, dots, and parentheses. If the number has a leading '+',
-    it is treated as international E.164. Otherwise, region-specific prefix rules are applied:
-    - Region "DZ" (Algeria, default clinic region): 9 or 10 digits starting with 0 or local digit.
-      E.g., "0550123456" -> "+213550123456".
-    - Other regions or already international: requires standard E.164 format.
+    it is treated as international E.164. Otherwise, region-specific prefix rules are applied.
 
     Args:
         value: Raw phone number string.
@@ -74,7 +105,7 @@ def normalize_phone(value: str, region: str = "DZ") -> str:
         The normalized phone number in E.164 format (with leading '+').
 
     Raises:
-        ValidationError: If the value is not a string, empty, or cannot be parsed as a valid phone.
+        ValidationError: If the value is not a string, empty, or cannot be parsed.
     """
     if not isinstance(value, str):
         raise ValidationError(
@@ -83,7 +114,6 @@ def normalize_phone(value: str, region: str = "DZ") -> str:
             safe_details={"field": "phone"},
         )
 
-    # Remove common formatting characters
     cleaned = re.sub(r"[\s\-().]", "", value)
     if not cleaned:
         raise ValidationError(
@@ -104,24 +134,9 @@ def normalize_phone(value: str, region: str = "DZ") -> str:
             )
         return cleaned
 
-    # Local Algerian number normalization: e.g. "0550123456" -> "+213550123456"
-    # Valid Algerian mobile/landline prefixes typically start with 0 followed by 2, 3, 4 (landlines) or 5, 6, 7, 8, 9
     if upper_region == "DZ":
-        if cleaned.startswith("0") and len(cleaned) == 10 and cleaned.isdigit() and cleaned[1] != "0":
-            return "+213" + cleaned[1:]
-        if cleaned.startswith("213") and len(cleaned) == 12 and cleaned.isdigit() and cleaned[3] != "0":
-            return "+" + cleaned
-        if len(cleaned) == 9 and cleaned.isdigit() and cleaned[0] in "567":
-            return "+213" + cleaned
-        # Any other 0-prefixed number for DZ is invalid
-        if cleaned.startswith("0"):
-            raise ValidationError(
-                code="INVALID_VALUE",
-                message_key="contact.phone.invalid",
-                safe_details={"field": "phone"},
-            )
+        return _normalize_algerian_phone(cleaned)
 
-    # Fallback: check if the digits form a valid E.164 number with added '+'
     candidate = "+" + cleaned
     if _E164_PATTERN.match(candidate):
         return candidate

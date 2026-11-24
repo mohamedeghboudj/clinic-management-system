@@ -62,9 +62,7 @@ class Person(Entity):
                 safe_details={"field": "contact"},
             )
 
-        if self.birth_date is not None and (
-            not isinstance(self.birth_date, date) or isinstance(self.birth_date, bool)
-        ):
+        if self.birth_date is not None and type(self.birth_date) is not date:
             raise ValidationError(
                 code="INVALID_VALUE",
                 message_key="person.birth_date.invalid",
@@ -130,4 +128,3 @@ class Person(Entity):
 
         self.contact = contact
         self.address = address
-

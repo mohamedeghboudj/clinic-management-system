@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
@@ -231,13 +231,13 @@ class TestDoctorProfileTransitions:
         assert doctor.active is True
 
         doctor.deactivate()
-        assert doctor.active is False
+        assert bool(doctor.active) is False
 
         doctor.activate()
-        assert doctor.active is True
+        assert bool(doctor.active) is True
 
         doctor.deactivate()
-        assert doctor.active is False
+        assert bool(doctor.active) is False
 
 
 class TestDoctorProfileEntityIdentity:
@@ -296,4 +296,3 @@ class TestDoctorProfileEntityIdentity:
         )
         with pytest.raises(TypeError, match="unhashable"):
             hash(doctor)
-

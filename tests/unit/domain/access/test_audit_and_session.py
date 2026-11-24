@@ -14,46 +14,69 @@ from clinic_management.domain.shared.errors import (
     ValidationError,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_audit(**kwargs) -> AuditEntry:
-    defaults = dict(
-        id=uuid4(),
-        clinic_id=uuid4(),
-        actor_id=uuid4(),
-        action="PATIENT_ACCESSED",
-        resource_type="Patient",
-        resource_id=uuid4(),
-        outcome="SUCCESS",
-        occurred_at=datetime.now(UTC),
-        correlation_id=uuid4(),
-        reason_code=None,
+
+_SENTINEL = object()
+
+
+def _make_audit(
+    id: object = _SENTINEL,
+    clinic_id: object = _SENTINEL,
+    actor_id: object = _SENTINEL,
+    action: object = "PATIENT_ACCESSED",
+    resource_type: object = "Patient",
+    resource_id: object = _SENTINEL,
+    outcome: object = "SUCCESS",
+    occurred_at: object = _SENTINEL,
+    correlation_id: object = _SENTINEL,
+    reason_code: object = None,
+) -> AuditEntry:
+    """Create an AuditEntry for testing."""
+    return AuditEntry(
+        id=uuid4() if id is _SENTINEL else id,  # type: ignore[arg-type]
+        clinic_id=uuid4() if clinic_id is _SENTINEL else clinic_id,  # type: ignore[arg-type]
+        actor_id=uuid4() if actor_id is _SENTINEL else actor_id,  # type: ignore[arg-type]
+        action=action,  # type: ignore[arg-type]
+        resource_type=resource_type,  # type: ignore[arg-type]
+        resource_id=uuid4() if resource_id is _SENTINEL else resource_id,  # type: ignore[arg-type]
+        outcome=outcome,  # type: ignore[arg-type]
+        occurred_at=datetime.now(UTC) if occurred_at is _SENTINEL else occurred_at,  # type: ignore[arg-type]
+        correlation_id=uuid4() if correlation_id is _SENTINEL else correlation_id,  # type: ignore[arg-type]
+        reason_code=reason_code,  # type: ignore[arg-type]
     )
-    defaults.update(kwargs)
-    return AuditEntry(**defaults)
 
 
-def _make_session(**kwargs) -> Session:
+def _make_session(
+    id: object = None,
+    account_id: object = None,
+    auth_version: object = 1,
+    refresh_token_hash: object = None,
+    created_at: object = None,
+    expires_at: object = None,
+    revoked_at: object = None,
+) -> Session:
+    """Create a Session for testing."""
     now = datetime.now(UTC)
-    defaults = dict(
-        id=uuid4(),
-        account_id=uuid4(),
-        auth_version=1,
-        refresh_token_hash="$argon2id$hashedrefreshtoken",
-        created_at=now,
-        expires_at=now + timedelta(days=7),
-        revoked_at=None,
+    if refresh_token_hash is None:
+        refresh_token_hash = "$argon2id$hashedrefreshtoken"
+    return Session(
+        id=id if id is not None else uuid4(),  # type: ignore[arg-type]
+        account_id=account_id if account_id is not None else uuid4(),  # type: ignore[arg-type]
+        auth_version=auth_version,  # type: ignore[arg-type]
+        refresh_token_hash=refresh_token_hash,  # type: ignore[arg-type]
+        created_at=created_at if created_at is not None else now,  # type: ignore[arg-type]
+        expires_at=expires_at if expires_at is not None else now + timedelta(days=7),  # type: ignore[arg-type]
+        revoked_at=revoked_at,  # type: ignore[arg-type]
     )
-    defaults.update(kwargs)
-    return Session(**defaults)
 
 
 # ---------------------------------------------------------------------------
 # AuditEntry tests
 # ---------------------------------------------------------------------------
+
 
 class TestAuditEntryConstruction:
     """Tests for AuditEntry immutable record."""
@@ -108,6 +131,7 @@ class TestAuditEntryConstruction:
 # ---------------------------------------------------------------------------
 # Session tests
 # ---------------------------------------------------------------------------
+
 
 class TestSessionConstruction:
     """Tests for Session construction and invariants."""
@@ -187,4 +211,3 @@ class TestSessionValidityAndRevocation:
         session = _make_session()
         with pytest.raises(ValidationError):
             session.revoke(at=datetime.now())
-

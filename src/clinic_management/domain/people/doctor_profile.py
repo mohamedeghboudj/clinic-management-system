@@ -101,4 +101,3 @@ class DoctorProfile(Entity):
                 safe_details={"doctor_id": str(self.id)},
             )
         self.active = False
-

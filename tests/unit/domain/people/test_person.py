@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
@@ -109,9 +109,7 @@ class TestPersonConstruction:
         assert exc_info.value.safe_details["field"] == "given_name"
 
     @pytest.mark.parametrize("empty_name", ["", "   ", "\t\n"])
-    def test_empty_family_name_rejected(
-        self, empty_name: str, sample_contact: ContactInfo
-    ) -> None:
+    def test_empty_family_name_rejected(self, empty_name: str, sample_contact: ContactInfo) -> None:
         """Empty or whitespace family_name raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
             Person(
@@ -190,9 +188,7 @@ class TestPersonBehavior:
         assert person.age_on(date(2026, 3, 14)) == 25
         assert person.age_on(date(2026, 3, 15)) == 26
 
-    def test_age_on_with_unknown_birth_date_returns_none(
-        self, sample_contact: ContactInfo
-    ) -> None:
+    def test_age_on_with_unknown_birth_date_returns_none(self, sample_contact: ContactInfo) -> None:
         """age_on returns None when birth_date is None."""
         person = Person(
             id=uuid4(),
@@ -203,9 +199,7 @@ class TestPersonBehavior:
         )
         assert person.age_on(date(2026, 3, 15)) is None
 
-    def test_update_contact(
-        self, sample_contact: ContactInfo, sample_address: Address
-    ) -> None:
+    def test_update_contact(self, sample_contact: ContactInfo, sample_address: Address) -> None:
         """update_contact replaces contact and address."""
         person = Person(
             id=uuid4(),
@@ -261,4 +255,3 @@ class TestPersonEntityIdentity:
         person = Person(id=uuid4(), given_name="Ahmed", family_name="Ali", contact=sample_contact)
         with pytest.raises(TypeError, match="unhashable"):
             hash(person)
-
