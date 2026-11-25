@@ -1,4 +1,4 @@
-# Contributing
+﻿# Contributing
 
 Use the Python 3.14 Conda environment and run the README checks from the repository
 root. Runtime packages belong in pinned `requirements.txt`; direct developer
