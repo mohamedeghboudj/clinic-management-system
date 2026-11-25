@@ -1,4 +1,4 @@
-"""Doctor–patient consultation aggregate with draft/final lifecycle."""
+"""Doctorâ€“patient consultation aggregate with draft/final lifecycle."""
 
 from __future__ import annotations
 
@@ -91,23 +91,44 @@ class Consultation(Entity):
                 message_key="clinical.consultation.status.invalid",
             )
 
+        if (self.status is ConsultationStatus.FINAL) != (self.finalized_at is not None):
+            raise ValidationError(
+                code="INVALID_VALUE", message_key="clinical.consultation.finalized_at.invalid"
+            )
+
     def __setattr__(self, name: str, value: object) -> None:
-        """Prevent modifying the clinical note directly once finalized.
+        """Keep lifecycle fields command-owned and finalized data immutable.
 
         Args:
-            name: Attribute name being modified.
-            value: Candidate attribute value.
+            name: Attribute being assigned.
+            value: Proposed field value.
 
         Raises:
-            InvalidTransitionError: If attempting to overwrite ``note`` on a
-                consultation that has already been finalized.
+            InvalidTransitionError: If an assignment would bypass the lifecycle.
         """
-        if name == "note" and getattr(self, "status", None) is ConsultationStatus.FINAL:
+        if name in vars(self) and (
+            name in {"status", "finalized_at"} or self.status is ConsultationStatus.FINAL
+        ):
             raise InvalidTransitionError(
                 code="INVALID_TRANSITION",
-                message_key="clinical.consultation.note.immutable",
+                message_key="clinical.consultation.note.immutable"
+                if name == "note"
+                else "clinical.consultation.lifecycle.immutable",
             )
         super().__setattr__(name, value)
+
+    def __delattr__(self, name: str) -> None:
+        """Reject removal of fields required to reconstruct a consultation.
+
+        Args:
+            name: Field the caller attempted to remove.
+
+        Raises:
+            InvalidTransitionError: A consultation must retain its fields.
+        """
+        raise InvalidTransitionError(
+            code="INVALID_TRANSITION", message_key="clinical.consultation.lifecycle.immutable"
+        )
 
     # ------------------------------------------------------------------
     # Commands
@@ -156,6 +177,6 @@ class Consultation(Entity):
                 message_key="clinical.consultation.finalize.not_draft",
             )
         require_utc(at)
-        self.status = ConsultationStatus.FINAL
-        self.finalized_at = at
         self.updated_at = at
+        object.__setattr__(self, "finalized_at", at)
+        object.__setattr__(self, "status", ConsultationStatus.FINAL)
