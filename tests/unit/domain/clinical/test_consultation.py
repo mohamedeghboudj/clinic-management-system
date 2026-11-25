@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -90,6 +90,18 @@ def test_consultation_lifecycle_draft_to_final() -> None:
     consultation.finalize(at=final_time)
     assert consultation.status.value == ConsultationStatus.FINAL.value
     assert consultation.finalized_at == final_time
+    with pytest.raises(InvalidTransitionError):
+        consultation.status = ConsultationStatus.DRAFT
+    with pytest.raises(InvalidTransitionError):
+        consultation.finalized_at = None
+    with pytest.raises(InvalidTransitionError):
+        del consultation.status
+    with pytest.raises(ValidationError):
+        replace(consultation, finalized_at=None)
+    with pytest.raises(ValidationError):
+        replace(consultation, status=ConsultationStatus.DRAFT)
+    assert consultation.finalized_at == final_time
+    assert consultation.status is ConsultationStatus.FINAL
     assert consultation.version == 0
 
 
