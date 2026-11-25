@@ -90,7 +90,7 @@ def test_consultation_lifecycle_draft_to_final() -> None:
     consultation.finalize(at=final_time)
     assert consultation.status.value == ConsultationStatus.FINAL.value
     assert consultation.finalized_at == final_time
-    assert consultation.version == 1
+    assert consultation.version == 0
 
 
 def test_consultation_finalized_note_cannot_be_updated() -> None:
@@ -156,13 +156,12 @@ def test_consultation_joint_m1_m4_finalize_save_reload() -> None:
     draft.finalize(at=LATER)
     assert draft.status.value == ConsultationStatus.FINAL.value
     assert draft.finalized_at == LATER
+    assert draft.version == 0
 
-    # 3. Save via M1 unit of work transaction
+    # 3. Save via M1 foundation store versioned save
     unit = MemoryUnitOfWork(store)
     with unit:
-        current_rows = store.read_collection("consultations")
-        current_rows[draft.id] = draft
-        store.replace_collection("consultations", current_rows)
+        store.save_versioned("consultations", draft, expected_version=0)
         unit.commit()
 
     # 4. Reload from store (detached copy)
@@ -170,6 +169,8 @@ def test_consultation_joint_m1_m4_finalize_save_reload() -> None:
     assert isinstance(reloaded, Consultation)
     assert reloaded.status.value == ConsultationStatus.FINAL.value
     assert reloaded.finalized_at == LATER
+    assert reloaded.version == 1
+    assert draft.version == 0
     assert reloaded.note == "Initial draft note for joint persistence."
 
     # 5. Verify reloaded finalized consultation rejects direct mutation and update_note
