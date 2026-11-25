@@ -112,6 +112,88 @@ def test_consultation_finalized_note_cannot_be_updated() -> None:
     assert exc.value.code == "INVALID_TRANSITION"
 
 
+def test_consultation_finalized_note_rejects_direct_attribute_mutation() -> None:
+    """Verify that directly mutating consultation.note after finalization is rejected."""
+    consultation = Consultation(
+        id=UUID("00000000-0000-0000-0000-000000000015"),
+        clinic_id=CLINIC_ID,
+        patient_id=PATIENT_ID,
+        appointment_id=APPOINTMENT_ID,
+        doctor_id=DOCTOR_ID,
+        note="Initial clinical note.",
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    consultation.finalize(at=LATER)
+
+    with pytest.raises(InvalidTransitionError) as exc:
+        consultation.note = "Tampered clinical note."
+    assert exc.value.code == "INVALID_TRANSITION"
+    assert exc.value.message_key == "clinical.consultation.note.immutable"
+    assert consultation.note == "Initial clinical note."
+
+
+def test_consultation_joint_m1_m4_finalize_save_reload() -> None:
+    """Joint M1/M4 test: draft consultation is finalized, saved, and reloaded."""
+    from tests.support.store import MemoryStore
+    from tests.support.unit_of_work import MemoryUnitOfWork
+
+    store = MemoryStore()
+    draft = Consultation(
+        id=UUID("00000000-0000-0000-0000-000000000016"),
+        clinic_id=CLINIC_ID,
+        patient_id=PATIENT_ID,
+        appointment_id=APPOINTMENT_ID,
+        doctor_id=DOCTOR_ID,
+        note="Initial draft note for joint persistence.",
+        created_at=NOW,
+        updated_at=NOW,
+    )
+    # 1. Seed initial draft in store
+    store.replace_collection("consultations", {draft.id: draft})
+
+    # 2. Finalize consultation
+    draft.finalize(at=LATER)
+    assert draft.status.value == ConsultationStatus.FINAL.value
+    assert draft.finalized_at == LATER
+
+    # 3. Save via M1 unit of work transaction
+    unit = MemoryUnitOfWork(store)
+    with unit:
+        current_rows = store.read_collection("consultations")
+        current_rows[draft.id] = draft
+        store.replace_collection("consultations", current_rows)
+        unit.commit()
+
+    # 4. Reload from store (detached copy)
+    reloaded = store.read_collection("consultations")[draft.id]
+    assert isinstance(reloaded, Consultation)
+    assert reloaded.status.value == ConsultationStatus.FINAL.value
+    assert reloaded.finalized_at == LATER
+    assert reloaded.note == "Initial draft note for joint persistence."
+
+    # 5. Verify reloaded finalized consultation rejects direct mutation and update_note
+    with pytest.raises(InvalidTransitionError):
+        reloaded.update_note("Direct edit attempt", at=LATER + timedelta(hours=1))
+    with pytest.raises(InvalidTransitionError):
+        reloaded.note = "Public field overwrite attempt"
+
+    # 6. Verify corrections must proceed through the amendment path
+    amendment = ClinicalAmendment(
+        id=UUID("00000000-0000-0000-0000-000000000017"),
+        clinic_id=CLINIC_ID,
+        patient_id=PATIENT_ID,
+        entry_id=draft.id,
+        author_id=DOCTOR_ID,
+        reason="Prescribe alternate antibiotic following allergy review.",
+        replacement_content="Amended note: alternate antibiotic prescribed.",
+        recorded_at=LATER + timedelta(hours=1),
+    )
+    assert amendment.entry_id == reloaded.id
+    assert amendment.replacement_content == "Amended note: alternate antibiotic prescribed."
+    assert reloaded.note == "Initial draft note for joint persistence."
+
+
 def test_consultation_cannot_be_finalized_twice() -> None:
     """Verify that finalising an already final consultation raises InvalidTransitionError."""
     consultation = Consultation(
