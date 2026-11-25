@@ -136,6 +136,25 @@ def test_invoice_draft_editing_issuance_and_void_lifecycle() -> None:
     assert status_of(inv) == InvoiceStatus.VOID
 
 
+def test_invoice_rejects_duplicate_service_without_consultation() -> None:
+    """Two lines cannot reference the same service without consultation IDs."""
+    line1 = make_line(
+        line_id=1,
+        service_id=10,
+        consultation_id=None,
+    )
+    line2 = make_line(
+        line_id=2,
+        service_id=10,
+        consultation_id=None,
+    )
+
+    invoice = make_draft_invoice((line1,))
+
+    with pytest.raises(ValidationError):
+        invoice.add_line(line2)
+
+
 def test_invoice_validation_failures() -> None:
     """Empty draft cannot be issued and invalid constructor states raise ValidationError."""
     empty_inv = make_draft_invoice()

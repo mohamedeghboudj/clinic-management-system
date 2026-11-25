@@ -111,7 +111,6 @@ class Invoice(Entity):
                 )
             if (
                 line.source_service_id is not None
-                and line.source_consultation_id is not None
                 and existing.source_service_id == line.source_service_id
                 and existing.source_consultation_id == line.source_consultation_id
             ):
