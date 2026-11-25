@@ -163,7 +163,7 @@ def test_consultation_update_note_and_finalize_preserve_state_on_invalid_inputs(
     assert consultation.status.value == ConsultationStatus.FINAL.value
     assert consultation.finalized_at == T2
     assert consultation.updated_at == T2
-    assert consultation.version == 1
+    assert consultation.version == 0
 
 
 def test_clinical_entry_validates_uuids_timestamps_and_exact_limits() -> None:

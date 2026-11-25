@@ -159,4 +159,3 @@ class Consultation(Entity):
         self.status = ConsultationStatus.FINAL
         self.finalized_at = at
         self.updated_at = at
-        self.version += 1
