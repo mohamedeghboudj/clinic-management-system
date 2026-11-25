@@ -1,1 +1,1 @@
-"""Independent verification test package."""
+"""Independent peer test suites."""
