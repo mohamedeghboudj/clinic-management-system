@@ -1,3 +1,2 @@
-# Week 1 M1 runtime uses only Python 3.14's standard library.
-# Add tested, pinned third-party runtime packages when their features begin.
-# Development dependencies are locked separately in requirements-dev.txt.
+# IANA timezone data for zoneinfo on Windows and minimal operating systems.
+tzdata==2026.6

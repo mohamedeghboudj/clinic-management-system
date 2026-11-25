@@ -20,6 +20,7 @@ def main() -> int:
     expected = (
         "# Generated from [dependency-groups].dev by scripts.requirements_input.\n"
         "# Edit pyproject.toml, regenerate this input, then compile the hash lock.\n"
+        "-r requirements.txt\n"
         + "\n".join(dependencies)
         + "\n"
     )
