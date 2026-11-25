@@ -57,6 +57,7 @@ _ALLOWED_TRANSITIONS: dict[AppointmentStatus, frozenset[AppointmentStatus]] = {}
 
 
 def _init_transitions() -> None:
+    """Populate the allowed appointment status transition table."""
     S = AppointmentStatus
     _ALLOWED_TRANSITIONS.update(
         {

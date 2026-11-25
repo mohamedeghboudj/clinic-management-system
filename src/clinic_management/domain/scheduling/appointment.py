@@ -99,9 +99,7 @@ class Appointment(Entity):
                     message_key="appointment.cancellation_reason.invalid",
                     safe_details={"field": "cancellation_reason"},
                 )
-            object.__setattr__(
-                self, "cancellation_reason", self.cancellation_reason.strip()
-            )
+            object.__setattr__(self, "cancellation_reason", self.cancellation_reason.strip())
 
         require_aware(self.updated_at, "updated_at")
 

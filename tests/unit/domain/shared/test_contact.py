@@ -151,4 +151,3 @@ class TestContactInfo:
         with pytest.raises(ValidationError) as exc_info:
             ContactInfo(email="not_an_email")
         assert exc_info.value.code == "INVALID_VALUE"
-

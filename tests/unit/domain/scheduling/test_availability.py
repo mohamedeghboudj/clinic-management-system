@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, time, timedelta
-from typing import Any
+from datetime import UTC, datetime, time
 from uuid import uuid4
 
 import pytest
@@ -20,9 +19,9 @@ from clinic_management.domain.shared.time_slot import TimeSlot
 _ALGIERS = "Africa/Algiers"  # UTC+1 all year
 
 # A fixed Monday.  2026-11-09 is a Monday.
-_MON_09_00_UTC = datetime(2026, 11, 9, 8, 0, tzinfo=UTC)   # 09:00 Algiers local
+_MON_09_00_UTC = datetime(2026, 11, 9, 8, 0, tzinfo=UTC)  # 09:00 Algiers local
 _MON_09_30_UTC = datetime(2026, 11, 9, 8, 30, tzinfo=UTC)  # 09:30 Algiers local
-_MON_10_00_UTC = datetime(2026, 11, 9, 9, 0, tzinfo=UTC)   # 10:00 Algiers local
+_MON_10_00_UTC = datetime(2026, 11, 9, 9, 0, tzinfo=UTC)  # 10:00 Algiers local
 
 
 def _business_hours() -> OpeningHours:
@@ -42,6 +41,7 @@ def _slot(h_start: int, m_start: int, h_end: int, m_end: int, day: int = 9) -> T
 
 
 def _exception(slot: TimeSlot, reason: str = "MAINTENANCE") -> ScheduleException:
+    """Build a default ScheduleException for the given slot."""
     return ScheduleException(resource_id=uuid4(), slot=slot, reason_code=reason)
 
 
@@ -49,19 +49,23 @@ def _exception(slot: TimeSlot, reason: str = "MAINTENANCE") -> ScheduleException
 # ScheduleException
 # ---------------------------------------------------------------------------
 
+
 class TestScheduleException:
     """Construction and validation of ScheduleException."""
 
     def test_valid_exception_accepted(self) -> None:
+        """A valid ScheduleException stores the expected reason code."""
         exc = _exception(_slot(8, 0, 9, 0))
         assert exc.reason_code == "MAINTENANCE"
 
     def test_empty_reason_code_rejected(self) -> None:
+        """Blank reason_code raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
             ScheduleException(resource_id=uuid4(), slot=_slot(8, 0, 9, 0), reason_code="  ")
         assert exc_info.value.safe_details["field"] == "reason_code"
 
     def test_invalid_slot_type_rejected(self) -> None:
+        """Non-TimeSlot slot raises ValidationError."""
         with pytest.raises(ValidationError):
             ScheduleException(
                 resource_id=uuid4(),
@@ -70,6 +74,7 @@ class TestScheduleException:
             )
 
     def test_exception_is_immutable(self) -> None:
+        """ScheduleException is frozen and rejects attribute assignment."""
         exc = _exception(_slot(8, 0, 9, 0))
         with pytest.raises((TypeError, AttributeError)):
             exc.reason_code = "CHANGED"  # type: ignore[misc]
@@ -78,6 +83,7 @@ class TestScheduleException:
 # ---------------------------------------------------------------------------
 # AvailabilityRule
 # ---------------------------------------------------------------------------
+
 
 class TestAvailabilityRule:
     """Tests for AvailabilityRule.allows()."""
@@ -99,7 +105,7 @@ class TestAvailabilityRule:
     def test_slot_overlapping_exception_not_allowed(self) -> None:
         """Slot that overlaps a schedule exception → False."""
         rule = AvailabilityRule()
-        slot = _slot(8, 0, 8, 30)       # 09:00–09:30 local
+        slot = _slot(8, 0, 8, 30)  # 09:00–09:30 local
         exc = _exception(_slot(8, 15, 9, 0))  # Overlapping exception
         assert rule.allows(slot, _business_hours(), [exc]) is False
 
@@ -146,6 +152,7 @@ class TestAvailabilityRule:
 # within_opening_hours
 # ---------------------------------------------------------------------------
 
+
 class TestWithinOpeningHours:
     """Tests for the within_opening_hours delegate function."""
 
@@ -156,6 +163,7 @@ class TestWithinOpeningHours:
         assert within_opening_hours(slot, hours) == hours.covers(slot)
 
     def test_slot_outside_returns_false(self) -> None:
+        """within_opening_hours returns False for slots outside opening hours."""
         hours = _business_hours()
         slot = _slot(5, 0, 6, 0)
         assert within_opening_hours(slot, hours) is False

@@ -143,9 +143,7 @@ class OpeningHours:
 
             # Determine the portion of the slot that falls on this date.
             day_start = (
-                local_start
-                if local_date == local_start.date()
-                else _midnight(local_date, tz)
+                local_start if local_date == local_start.date() else _midnight(local_date, tz)
             )
 
             # The end of the coverage check on this date:

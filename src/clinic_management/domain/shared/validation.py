@@ -52,4 +52,3 @@ def require_non_empty(
         )
 
     return stripped
-

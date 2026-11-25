@@ -1,11 +1,1 @@
-"""Access domain package: roles, permissions, scopes, and grants."""
-
-from clinic_management.domain.access.enums import AccessScope, Permission, Role
-from clinic_management.domain.access.grants import RoleGrant
-
-__all__ = [
-    "AccessScope",
-    "Permission",
-    "Role",
-    "RoleGrant",
-]
+"""M2 accounts, grants and immutable AuditEntry; satisfy the M1 AuditRecord protocol."""

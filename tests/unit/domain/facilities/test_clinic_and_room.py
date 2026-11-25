@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from datetime import time
-from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -27,36 +26,58 @@ def _default_hours(tz: str = _ALGIERS) -> OpeningHours:
     return OpeningHours(timezone=tz, periods=periods)
 
 
-def _make_clinic(**kwargs: Any) -> Clinic:
-    """Build a default valid ``Clinic``, allowing field overrides via kwargs."""
-    defaults: dict[str, Any] = dict(
-        id=uuid4(),
-        name="Polyclinique Centrale",
-        contact=ContactInfo(phone="+213550123456"),
-        timezone=_ALGIERS,
-        currency="DZD",
-        opening_hours=_default_hours(_ALGIERS),
+def _make_clinic(
+    *,
+    id: UUID | None = None,
+    name: str = "Polyclinique Centrale",
+    contact: ContactInfo | None = None,
+    timezone: str = _ALGIERS,
+    currency: str = "DZD",
+    opening_hours: OpeningHours | None = None,
+    version: int = 0,
+    address: Address | None = None,
+) -> Clinic:
+    """Build a default valid ``Clinic``, allowing field overrides."""
+    return Clinic(
+        id=id or uuid4(),
+        name=name,
+        contact=contact if contact is not None else ContactInfo(phone="+213550123456"),
+        timezone=timezone,
+        currency=currency,
+        opening_hours=opening_hours if opening_hours is not None else _default_hours(timezone),
+        version=version,
+        address=address,
     )
-    defaults.update(kwargs)
-    return Clinic(**defaults)
 
 
-def _make_room(**kwargs: Any) -> Room:
-    """Build a default valid ``Room``, allowing field overrides via kwargs."""
-    defaults: dict[str, Any] = dict(
-        id=uuid4(),
-        clinic_id=uuid4(),
-        number="C-01",
-        kind=RoomType.CONSULTATION,
-        capacity=1,
+def _make_room(
+    *,
+    id: UUID | None = None,
+    clinic_id: UUID | None = None,
+    number: str = "C-01",
+    kind: RoomType = RoomType.CONSULTATION,
+    capacity: int = 1,
+    status: RoomStatus = RoomStatus.ACTIVE,
+    status_reason: str | None = None,
+    version: int = 0,
+) -> Room:
+    """Build a default valid ``Room``, allowing field overrides."""
+    return Room(
+        id=id or uuid4(),
+        clinic_id=clinic_id or uuid4(),
+        number=number,
+        kind=kind,
+        capacity=capacity,
+        status=status,
+        status_reason=status_reason,
+        version=version,
     )
-    defaults.update(kwargs)
-    return Room(**defaults)
 
 
 # ---------------------------------------------------------------------------
 # Clinic tests
 # ---------------------------------------------------------------------------
+
 
 class TestClinicConstruction:
     """Construction and field validation for the Clinic entity."""
@@ -161,17 +182,20 @@ class TestClinicEntityIdentity:
     """M1 Entity identity semantics for Clinic."""
 
     def test_same_id_equals(self) -> None:
+        """Clinics with identical IDs compare equal."""
         cid = uuid4()
         c1 = _make_clinic(id=cid, name="A")
         c2 = _make_clinic(id=cid, name="B")
         assert c1 == c2
 
     def test_different_id_not_equal(self) -> None:
+        """Clinics with distinct IDs do not compare equal."""
         c1 = _make_clinic()
         c2 = _make_clinic()
         assert c1 != c2
 
     def test_clinic_not_hashable(self) -> None:
+        """Clinic entity is unhashable per Entity semantics."""
         with pytest.raises(TypeError):
             hash(_make_clinic())
 
@@ -179,6 +203,7 @@ class TestClinicEntityIdentity:
 # ---------------------------------------------------------------------------
 # Room tests
 # ---------------------------------------------------------------------------
+
 
 class TestRoomConstruction:
     """Construction and field validation for the Room entity."""
@@ -264,16 +289,19 @@ class TestRoomEntityIdentity:
     """M1 Entity identity semantics for Room."""
 
     def test_same_id_equals(self) -> None:
+        """Rooms with identical IDs compare equal."""
         rid = uuid4()
         r1 = _make_room(id=rid, number="A-01")
         r2 = _make_room(id=rid, number="A-99")
         assert r1 == r2
 
     def test_different_id_not_equal(self) -> None:
+        """Rooms with distinct IDs do not compare equal."""
         r1 = _make_room()
         r2 = _make_room()
         assert r1 != r2
 
     def test_room_not_hashable(self) -> None:
+        """Room entity is unhashable per Entity semantics."""
         with pytest.raises(TypeError):
             hash(_make_room())

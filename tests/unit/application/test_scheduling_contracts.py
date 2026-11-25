@@ -209,9 +209,7 @@ class _StubAppointmentRepository(AppointmentRepository):
                 continue
             if not appt.slot.overlaps(slot):
                 continue
-            if (doctor_id and appt.doctor_id == doctor_id) or (
-                room_id and appt.room_id == room_id
-            ):
+            if (doctor_id and appt.doctor_id == doctor_id) or (room_id and appt.room_id == room_id):
                 results.append(appt)
         return tuple(results)
 
@@ -325,9 +323,7 @@ class TestAppointmentRepositoryPort:
         appt = _make_appointment(clinic_id=clinic_id)
         object.__setattr__(appt, "doctor_id", doctor_id)
         repo.add(appt)
-        overlapping = repo.find_overlaps(
-            clinic_id, _SLOT, doctor_id=doctor_id, room_id=None
-        )
+        overlapping = repo.find_overlaps(clinic_id, _SLOT, doctor_id=doctor_id, room_id=None)
         assert len(overlapping) == 1
 
     def test_find_overlaps_excludes_id(self) -> None:
@@ -352,9 +348,7 @@ class TestAppointmentRepositoryPort:
         object.__setattr__(appt, "doctor_id", doctor_id)
         appt.cancel("test", at=_NOW + timedelta(minutes=1))
         repo.add(appt)
-        overlapping = repo.find_overlaps(
-            clinic_id, _SLOT, doctor_id=doctor_id, room_id=None
-        )
+        overlapping = repo.find_overlaps(clinic_id, _SLOT, doctor_id=doctor_id, room_id=None)
         assert len(overlapping) == 0
 
     def test_list_for_doctor_returns_page(self) -> None:

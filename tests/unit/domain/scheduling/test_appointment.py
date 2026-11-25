@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
-from typing import Any
 
 import pytest
 
@@ -17,76 +16,107 @@ from clinic_management.domain.shared.time_slot import TimeSlot
 # Fixed test data
 # ---------------------------------------------------------------------------
 
-_T_BASE = datetime(2026, 11, 10, 9, 0, tzinfo=UTC)   # 09:00 UTC Monday
-_T_END  = datetime(2026, 11, 10, 9, 30, tzinfo=UTC)  # 09:30 UTC
-_T_AT   = datetime(2026, 11, 10, 9, 5,  tzinfo=UTC)  # 09:05 UTC — during slot
+_T_BASE = datetime(2026, 11, 10, 9, 0, tzinfo=UTC)  # 09:00 UTC Monday
+_T_END = datetime(2026, 11, 10, 9, 30, tzinfo=UTC)  # 09:30 UTC
+_T_AT = datetime(2026, 11, 10, 9, 5, tzinfo=UTC)  # 09:05 UTC — during slot
 
 _SLOT = TimeSlot(start=_T_BASE, end=_T_END)
 
 
-def _make_appointment(**kwargs: Any) -> Appointment:
-    """Build a default valid Appointment, allowing field overrides via kwargs."""
-    defaults: dict[str, Any] = dict(
-        id=uuid4(),
-        clinic_id=uuid4(),
-        patient_id=uuid4(),
-        doctor_id=uuid4(),
-        room_id=uuid4(),
-        slot=_SLOT,
-        updated_at=_T_BASE,
+def _make_appointment(
+    *,
+    id: UUID | None = None,
+    clinic_id: UUID | None = None,
+    patient_id: UUID | None = None,
+    doctor_id: UUID | None = None,
+    room_id: UUID | None = None,
+    slot: TimeSlot = _SLOT,
+    updated_at: datetime = _T_BASE,
+    version: int = 0,
+    reason_summary: str | None = None,
+) -> Appointment:
+    """Build a default valid Appointment, allowing field overrides."""
+    return Appointment(
+        id=id or uuid4(),
+        clinic_id=clinic_id or uuid4(),
+        patient_id=patient_id or uuid4(),
+        doctor_id=doctor_id or uuid4(),
+        room_id=room_id or uuid4(),
+        slot=slot,
+        updated_at=updated_at,
+        version=version,
+        reason_summary=reason_summary,
     )
-    defaults.update(kwargs)
-    return Appointment(**defaults)
 
 
 # ---------------------------------------------------------------------------
 # AppointmentStatus transition table
 # ---------------------------------------------------------------------------
 
+
 class TestAppointmentStatusTransitions:
     """Unit tests for the AppointmentStatus.can_transition_to table."""
 
-    @pytest.mark.parametrize("target", [
-        AppointmentStatus.CHECKED_IN,
-        AppointmentStatus.NO_SHOW,
-        AppointmentStatus.CANCELLED,
-    ])
+    @pytest.mark.parametrize(
+        "target",
+        [
+            AppointmentStatus.CHECKED_IN,
+            AppointmentStatus.NO_SHOW,
+            AppointmentStatus.CANCELLED,
+        ],
+    )
     def test_scheduled_valid_transitions(self, target: AppointmentStatus) -> None:
+        """SCHEDULED can transition to CHECKED_IN, NO_SHOW, or CANCELLED."""
         assert AppointmentStatus.SCHEDULED.can_transition_to(target) is True
 
-    @pytest.mark.parametrize("target", [
-        AppointmentStatus.COMPLETED,
-        AppointmentStatus.SCHEDULED,
-    ])
+    @pytest.mark.parametrize(
+        "target",
+        [
+            AppointmentStatus.COMPLETED,
+            AppointmentStatus.SCHEDULED,
+        ],
+    )
     def test_scheduled_invalid_transitions(self, target: AppointmentStatus) -> None:
+        """SCHEDULED cannot transition to COMPLETED or SCHEDULED."""
         assert AppointmentStatus.SCHEDULED.can_transition_to(target) is False
 
-    @pytest.mark.parametrize("target", [
-        AppointmentStatus.COMPLETED,
-        AppointmentStatus.CANCELLED,
-    ])
+    @pytest.mark.parametrize(
+        "target",
+        [
+            AppointmentStatus.COMPLETED,
+            AppointmentStatus.CANCELLED,
+        ],
+    )
     def test_checked_in_valid_transitions(self, target: AppointmentStatus) -> None:
+        """CHECKED_IN can transition to COMPLETED or CANCELLED."""
         assert AppointmentStatus.CHECKED_IN.can_transition_to(target) is True
 
-    @pytest.mark.parametrize("target", [
-        AppointmentStatus.SCHEDULED,
-        AppointmentStatus.NO_SHOW,
-    ])
+    @pytest.mark.parametrize(
+        "target",
+        [
+            AppointmentStatus.SCHEDULED,
+            AppointmentStatus.NO_SHOW,
+        ],
+    )
     def test_checked_in_invalid_transitions(self, target: AppointmentStatus) -> None:
+        """CHECKED_IN cannot transition to SCHEDULED or NO_SHOW."""
         assert AppointmentStatus.CHECKED_IN.can_transition_to(target) is False
 
-    @pytest.mark.parametrize("status", [
-        AppointmentStatus.COMPLETED,
-        AppointmentStatus.NO_SHOW,
-        AppointmentStatus.CANCELLED,
-    ])
-    def test_terminal_statuses_have_no_valid_transitions(
-        self, status: AppointmentStatus
-    ) -> None:
+    @pytest.mark.parametrize(
+        "status",
+        [
+            AppointmentStatus.COMPLETED,
+            AppointmentStatus.NO_SHOW,
+            AppointmentStatus.CANCELLED,
+        ],
+    )
+    def test_terminal_statuses_have_no_valid_transitions(self, status: AppointmentStatus) -> None:
+        """Terminal statuses permit no outgoing transitions."""
         for target in AppointmentStatus:
             assert status.can_transition_to(target) is False
 
     def test_active_status_set(self) -> None:
+        """Only SCHEDULED and CHECKED_IN are active statuses."""
         assert AppointmentStatus.SCHEDULED.is_active() is True
         assert AppointmentStatus.CHECKED_IN.is_active() is True
         assert AppointmentStatus.COMPLETED.is_active() is False
@@ -97,6 +127,7 @@ class TestAppointmentStatusTransitions:
 # ---------------------------------------------------------------------------
 # Appointment construction
 # ---------------------------------------------------------------------------
+
 
 class TestAppointmentConstruction:
     """Construction and field validation for Appointment."""
@@ -119,6 +150,7 @@ class TestAppointmentConstruction:
             _make_appointment(slot="not-a-slot")  # type: ignore[arg-type]
 
     def test_negative_version_rejected(self) -> None:
+        """Negative version raises ValidationError."""
         with pytest.raises(ValidationError):
             _make_appointment(version=-1)
 
@@ -137,16 +169,19 @@ class TestAppointmentConstruction:
 # check_in
 # ---------------------------------------------------------------------------
 
+
 class TestAppointmentCheckIn:
     """Tests for Appointment.check_in()."""
 
     def test_check_in_from_scheduled_succeeds(self) -> None:
+        """Checking in a SCHEDULED appointment transitions it to CHECKED_IN."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         assert appt.status is AppointmentStatus.CHECKED_IN
         assert appt.updated_at == _T_AT
 
     def test_check_in_from_checked_in_raises(self) -> None:
+        """Checking in an already CHECKED_IN appointment raises InvalidTransitionError."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         with pytest.raises(InvalidTransitionError) as exc_info:
@@ -154,12 +189,14 @@ class TestAppointmentCheckIn:
         assert exc_info.value.code == "INVALID_TRANSITION"
 
     def test_check_in_from_cancelled_raises(self) -> None:
+        """Checking in a CANCELLED appointment raises InvalidTransitionError."""
         appt = _make_appointment()
         appt.cancel("Patient request", at=_T_AT)
         with pytest.raises(InvalidTransitionError):
             appt.check_in(at=_T_AT)
 
     def test_check_in_naive_timestamp_rejected(self) -> None:
+        """Naive timestamp in check_in raises ValidationError."""
         appt = _make_appointment()
         with pytest.raises(ValidationError):
             appt.check_in(at=datetime(2026, 11, 10, 9, 5))
@@ -169,10 +206,12 @@ class TestAppointmentCheckIn:
 # complete
 # ---------------------------------------------------------------------------
 
+
 class TestAppointmentComplete:
     """Tests for Appointment.complete()."""
 
     def test_complete_from_checked_in_succeeds(self) -> None:
+        """Completing a CHECKED_IN appointment transitions it to COMPLETED."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         t_complete = _T_END + timedelta(minutes=1)
@@ -181,11 +220,13 @@ class TestAppointmentComplete:
         assert appt.updated_at == t_complete
 
     def test_complete_from_scheduled_raises(self) -> None:
+        """Completing a SCHEDULED appointment raises InvalidTransitionError."""
         appt = _make_appointment()
         with pytest.raises(InvalidTransitionError):
             appt.complete(at=_T_END)
 
     def test_complete_from_completed_raises(self) -> None:
+        """Completing an already COMPLETED appointment raises InvalidTransitionError."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         appt.complete(at=_T_END)
@@ -204,22 +245,26 @@ class TestAppointmentComplete:
 # cancel
 # ---------------------------------------------------------------------------
 
+
 class TestAppointmentCancel:
     """Tests for Appointment.cancel()."""
 
     def test_cancel_from_scheduled_preserves_reason(self) -> None:
+        """Cancelling a SCHEDULED appointment sets CANCELLED and stores reason."""
         appt = _make_appointment()
         appt.cancel("Patient request", at=_T_AT)
         assert appt.status is AppointmentStatus.CANCELLED
         assert appt.cancellation_reason == "Patient request"
 
     def test_cancel_from_checked_in_succeeds(self) -> None:
+        """Cancelling a CHECKED_IN appointment transitions it to CANCELLED."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         appt.cancel("Doctor unavailable", at=_T_AT + timedelta(minutes=5))
         assert appt.status is AppointmentStatus.CANCELLED
 
     def test_cancel_from_completed_raises(self) -> None:
+        """Cancelling a COMPLETED appointment raises InvalidTransitionError."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         appt.complete(at=_T_END)
@@ -227,17 +272,20 @@ class TestAppointmentCancel:
             appt.cancel("Too late", at=_T_END + timedelta(seconds=1))
 
     def test_cancel_empty_reason_raises(self) -> None:
+        """Blank cancellation reason raises ValidationError."""
         appt = _make_appointment()
         with pytest.raises(ValidationError) as exc_info:
             appt.cancel("   ", at=_T_AT)
         assert exc_info.value.safe_details["field"] == "reason"
 
     def test_cancel_naive_timestamp_raises(self) -> None:
+        """Naive timestamp in cancel raises ValidationError."""
         appt = _make_appointment()
         with pytest.raises(ValidationError):
             appt.cancel("reason", at=datetime(2026, 11, 10, 9, 5))
 
     def test_cancel_reason_stripped(self) -> None:
+        """Cancellation reason is stripped of surrounding whitespace."""
         appt = _make_appointment()
         appt.cancel("  Patient request  ", at=_T_AT)
         assert appt.cancellation_reason == "Patient request"
@@ -246,6 +294,7 @@ class TestAppointmentCancel:
 # ---------------------------------------------------------------------------
 # mark_no_show
 # ---------------------------------------------------------------------------
+
 
 class TestAppointmentMarkNoShow:
     """Tests for Appointment.mark_no_show()."""
@@ -305,10 +354,12 @@ class TestAppointmentMarkNoShow:
 # reschedule
 # ---------------------------------------------------------------------------
 
+
 class TestAppointmentReschedule:
     """Tests for Appointment.reschedule()."""
 
     def test_reschedule_from_scheduled_succeeds(self) -> None:
+        """Rescheduling a SCHEDULED appointment updates slot and updated_at."""
         appt = _make_appointment()
         new_slot = TimeSlot(
             start=datetime(2026, 11, 10, 11, 0, tzinfo=UTC),
@@ -321,6 +372,7 @@ class TestAppointmentReschedule:
         assert appt.status is AppointmentStatus.SCHEDULED
 
     def test_reschedule_from_checked_in_raises(self) -> None:
+        """Rescheduling a CHECKED_IN appointment raises InvalidTransitionError."""
         appt = _make_appointment()
         appt.check_in(at=_T_AT)
         new_slot = TimeSlot(
@@ -332,6 +384,7 @@ class TestAppointmentReschedule:
         assert exc_info.value.code == "INVALID_TRANSITION"
 
     def test_reschedule_from_cancelled_raises(self) -> None:
+        """Rescheduling a CANCELLED appointment raises InvalidTransitionError."""
         appt = _make_appointment()
         appt.cancel("reason", at=_T_AT)
         new_slot = TimeSlot(
@@ -342,11 +395,13 @@ class TestAppointmentReschedule:
             appt.reschedule(new_slot, at=_T_AT)
 
     def test_reschedule_invalid_slot_type_raises(self) -> None:
+        """Non-TimeSlot new_slot in reschedule raises ValidationError."""
         appt = _make_appointment()
         with pytest.raises(ValidationError):
             appt.reschedule("not-a-slot", at=_T_AT)  # type: ignore[arg-type]
 
     def test_reschedule_naive_timestamp_raises(self) -> None:
+        """Naive timestamp in reschedule raises ValidationError."""
         appt = _make_appointment()
         new_slot = TimeSlot(
             start=datetime(2026, 11, 10, 11, 0, tzinfo=UTC),
@@ -360,20 +415,24 @@ class TestAppointmentReschedule:
 # Entity identity
 # ---------------------------------------------------------------------------
 
+
 class TestAppointmentEntityIdentity:
     """M1 Entity identity semantics for Appointment."""
 
     def test_same_id_equals(self) -> None:
+        """Appointments with identical IDs compare equal."""
         aid = uuid4()
         a1 = _make_appointment(id=aid)
         a2 = _make_appointment(id=aid)
         assert a1 == a2
 
     def test_different_id_not_equal(self) -> None:
+        """Appointments with distinct IDs do not compare equal."""
         a1 = _make_appointment()
         a2 = _make_appointment()
         assert a1 != a2
 
     def test_appointment_not_hashable(self) -> None:
+        """Appointment entity is unhashable per Entity semantics."""
         with pytest.raises(TypeError):
             hash(_make_appointment())

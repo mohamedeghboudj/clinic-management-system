@@ -14,8 +14,8 @@ _TZ_UTC = UTC
 _TZ_PLUS1 = timezone(timedelta(hours=1))
 _TZ_PLUS2 = timezone(timedelta(hours=2))
 
-T0 = datetime(2026, 11, 6, 8, 0, tzinfo=_TZ_UTC)   # 08:00 UTC
-T1 = datetime(2026, 11, 6, 9, 0, tzinfo=_TZ_UTC)   # 09:00 UTC
+T0 = datetime(2026, 11, 6, 8, 0, tzinfo=_TZ_UTC)  # 08:00 UTC
+T1 = datetime(2026, 11, 6, 9, 0, tzinfo=_TZ_UTC)  # 09:00 UTC
 T2 = datetime(2026, 11, 6, 10, 0, tzinfo=_TZ_UTC)  # 10:00 UTC
 T3 = datetime(2026, 11, 6, 11, 0, tzinfo=_TZ_UTC)  # 11:00 UTC
 
@@ -92,22 +92,22 @@ class TestTimeSlotOverlaps:
 
     def test_overlapping_slots_detected(self) -> None:
         """Two slots sharing time overlap."""
-        a = TimeSlot(start=T0, end=T2)   # [08:00, 10:00)
-        b = TimeSlot(start=T1, end=T3)   # [09:00, 11:00)
+        a = TimeSlot(start=T0, end=T2)  # [08:00, 10:00)
+        b = TimeSlot(start=T1, end=T3)  # [09:00, 11:00)
         assert a.overlaps(b) is True
         assert b.overlaps(a) is True
 
     def test_adjacent_slots_do_not_overlap(self) -> None:
         """Adjacent half-open intervals sharing only an endpoint do NOT overlap."""
-        a = TimeSlot(start=T0, end=T1)   # [08:00, 09:00)
-        b = TimeSlot(start=T1, end=T2)   # [09:00, 10:00)
+        a = TimeSlot(start=T0, end=T1)  # [08:00, 09:00)
+        b = TimeSlot(start=T1, end=T2)  # [09:00, 10:00)
         assert a.overlaps(b) is False
         assert b.overlaps(a) is False
 
     def test_completely_separate_slots_do_not_overlap(self) -> None:
         """Non-adjacent slots with a gap do not overlap."""
-        a = TimeSlot(start=T0, end=T1)   # [08:00, 09:00)
-        b = TimeSlot(start=T2, end=T3)   # [10:00, 11:00)
+        a = TimeSlot(start=T0, end=T1)  # [08:00, 09:00)
+        b = TimeSlot(start=T2, end=T3)  # [10:00, 11:00)
         assert a.overlaps(b) is False
         assert b.overlaps(a) is False
 
@@ -119,17 +119,17 @@ class TestTimeSlotOverlaps:
 
     def test_contained_slot_overlaps_container(self) -> None:
         """A slot fully inside another overlaps it."""
-        outer = TimeSlot(start=T0, end=T3)   # [08:00, 11:00)
-        inner = TimeSlot(start=T1, end=T2)   # [09:00, 10:00)
+        outer = TimeSlot(start=T0, end=T3)  # [08:00, 11:00)
+        inner = TimeSlot(start=T1, end=T2)  # [09:00, 10:00)
         assert outer.overlaps(inner) is True
         assert inner.overlaps(outer) is True
 
     def test_overlaps_uses_aware_comparison_across_timezones(self) -> None:
         """Timezone-aware datetimes representing the same instant overlap."""
         # 09:00 UTC == 10:00 +01:00
-        a = TimeSlot(start=T0, end=T1)   # [08:00, 09:00) UTC
-        b_start = datetime(2026, 11, 6, 9, 30, tzinfo=_TZ_PLUS1)   # 08:30 UTC
-        b_end = datetime(2026, 11, 6, 10, 30, tzinfo=_TZ_PLUS1)    # 09:30 UTC
+        a = TimeSlot(start=T0, end=T1)  # [08:00, 09:00) UTC
+        b_start = datetime(2026, 11, 6, 9, 30, tzinfo=_TZ_PLUS1)  # 08:30 UTC
+        b_end = datetime(2026, 11, 6, 10, 30, tzinfo=_TZ_PLUS1)  # 09:30 UTC
         b = TimeSlot(start=b_start, end=b_end)
         assert a.overlaps(b) is True
 
