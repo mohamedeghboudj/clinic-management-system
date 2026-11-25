@@ -1,4 +1,4 @@
-"""Verification tests for shared Money value object and rounding helpers."""
+"""Verification tests for Money value object used in clinical service catalogue."""
 
 from __future__ import annotations
 

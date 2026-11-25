@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import copy
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
+
+import pytest
 
 from clinic_management.application.contracts.clinical import ClinicalEntrySummary
 from clinic_management.application.contracts.paging import Page, PageRequest
@@ -17,6 +20,7 @@ from clinic_management.domain.clinical.consultation import Consultation
 from clinic_management.domain.clinical.prescription import Prescription
 from clinic_management.domain.clinical.record_entry import ClinicalEntry
 from clinic_management.domain.clinical.service_catalog import ServiceCatalogItem
+from clinic_management.domain.shared.errors import ConcurrencyError, NotFoundError
 from clinic_management.domain.shared.money import Money
 
 CLINIC_ID = UUID("00000000-0000-0000-0000-000000000001")
@@ -42,19 +46,29 @@ class _InMemoryClinicalRepository:
 
     def add_consultation(self, consultation: Consultation) -> None:
         """Add a consultation."""
-        self.consultations[consultation.id] = consultation
+        self.consultations[consultation.id] = copy.deepcopy(consultation)
 
     def save_consultation(self, consultation: Consultation, *, expected_version: int) -> None:
-        """Save a consultation."""
-        self.consultations[consultation.id] = consultation
+        """Save a consultation with optimistic-concurrency control."""
+        current = self.consultations.get(consultation.id)
+        if current is None:
+            raise NotFoundError(code="NOT_FOUND", message_key="clinical.consultation.not_found")
+        if current.version != expected_version:
+            raise ConcurrencyError(
+                code="STALE_VERSION",
+                message_key="clinical.consultation.version_stale",
+            )
+        saved = copy.deepcopy(consultation)
+        saved.version = expected_version + 1
+        self.consultations[consultation.id] = saved
 
     def append_entry(self, entry: ClinicalEntry) -> None:
         """Append an entry."""
-        self.entries[entry.id] = entry
+        self.entries[entry.id] = copy.deepcopy(entry)
 
     def append_amendment(self, amendment: ClinicalAmendment) -> None:
         """Append an amendment."""
-        self.amendments[amendment.id] = amendment
+        self.amendments[amendment.id] = copy.deepcopy(amendment)
 
     def get_entry(self, clinic_id: UUID, entry_id: UUID) -> ClinicalEntry | None:
         """Retrieve an entry."""
@@ -97,11 +111,21 @@ class _InMemoryClinicalRepository:
 
     def add_prescription(self, prescription: Prescription) -> None:
         """Add a prescription."""
-        self.prescriptions[prescription.id] = prescription
+        self.prescriptions[prescription.id] = copy.deepcopy(prescription)
 
     def save_prescription(self, prescription: Prescription, *, expected_version: int) -> None:
-        """Save a prescription."""
-        self.prescriptions[prescription.id] = prescription
+        """Save a prescription with optimistic-concurrency control."""
+        current = self.prescriptions.get(prescription.id)
+        if current is None:
+            raise NotFoundError(code="NOT_FOUND", message_key="clinical.prescription.not_found")
+        if current.version != expected_version:
+            raise ConcurrencyError(
+                code="STALE_VERSION",
+                message_key="clinical.prescription.version_stale",
+            )
+        saved = copy.deepcopy(prescription)
+        saved.version = expected_version + 1
+        self.prescriptions[prescription.id] = saved
 
 
 class _InMemoryServiceCatalogRepository:
@@ -118,11 +142,21 @@ class _InMemoryServiceCatalogRepository:
 
     def add(self, service: ServiceCatalogItem) -> None:
         """Add a service item."""
-        self.items[service.id] = service
+        self.items[service.id] = copy.deepcopy(service)
 
     def save(self, service: ServiceCatalogItem, *, expected_version: int) -> None:
-        """Save a service item."""
-        self.items[service.id] = service
+        """Save a service item with optimistic-concurrency control."""
+        current = self.items.get(service.id)
+        if current is None:
+            raise NotFoundError(code="NOT_FOUND", message_key="clinical.service_catalog.not_found")
+        if current.version != expected_version:
+            raise ConcurrencyError(
+                code="STALE_VERSION",
+                message_key="clinical.service_catalog.version_stale",
+            )
+        saved = copy.deepcopy(service)
+        saved.version = expected_version + 1
+        self.items[service.id] = saved
 
     def list_active(self, clinic_id: UUID, page: PageRequest) -> Page[ServiceCatalogItem]:
         """List active items."""
@@ -136,7 +170,7 @@ class _InMemoryServiceCatalogRepository:
 
 
 def test_clinical_repository_protocol_runtime_check() -> None:
-    """Verify in-memory clinical repository satisfies runtime protocol check."""
+    """Verify in-memory clinical repository satisfies runtime check and version ownership."""
     repo = _InMemoryClinicalRepository()
     assert isinstance(repo, ClinicalRepository)
 
@@ -151,8 +185,33 @@ def test_clinical_repository_protocol_runtime_check() -> None:
         updated_at=NOW,
     )
     repo.add_consultation(consultation)
-    assert repo.get_consultation(CLINIC_ID, consultation.id) == consultation
+    stored_c = repo.get_consultation(CLINIC_ID, consultation.id)
+    assert stored_c is not None
+    assert stored_c.version == 0
+
+    # Version ownership: save increments aggregate's version from 0 to 1
     repo.save_consultation(consultation, expected_version=0)
+    saved_c = repo.get_consultation(CLINIC_ID, consultation.id)
+    assert saved_c is not None
+    assert saved_c.version == 1
+
+    # Stale save rejected with ConcurrencyError
+    with pytest.raises(ConcurrencyError):
+        repo.save_consultation(consultation, expected_version=0)
+
+    # Missing aggregate raises NotFoundError
+    with pytest.raises(NotFoundError):
+        missing_c = Consultation(
+            id=UUID("00000000-0000-0000-0000-000000000099"),
+            clinic_id=CLINIC_ID,
+            patient_id=PATIENT_ID,
+            appointment_id=UUID("00000000-0000-0000-0000-000000000011"),
+            doctor_id=DOCTOR_ID,
+            note="Missing note.",
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        repo.save_consultation(missing_c, expected_version=0)
 
     entry = ClinicalEntry(
         id=UUID("00000000-0000-0000-0000-000000000020"),
@@ -191,12 +250,23 @@ def test_clinical_repository_protocol_runtime_check() -> None:
         doctor_id=DOCTOR_ID,
     )
     repo.add_prescription(prescription)
-    assert repo.get_prescription(CLINIC_ID, prescription.id) == prescription
+    stored_p = repo.get_prescription(CLINIC_ID, prescription.id)
+    assert stored_p is not None
+    assert stored_p.version == 0
+
+    # Version ownership: save increments version from 0 to 1
     repo.save_prescription(prescription, expected_version=0)
+    saved_p = repo.get_prescription(CLINIC_ID, prescription.id)
+    assert saved_p is not None
+    assert saved_p.version == 1
+
+    # Stale save rejected
+    with pytest.raises(ConcurrencyError):
+        repo.save_prescription(prescription, expected_version=0)
 
 
 def test_service_catalog_repository_protocol_runtime_check() -> None:
-    """Verify in-memory service catalog repository satisfies runtime protocol check."""
+    """Verify in-memory catalog repository satisfies runtime check and version ownership."""
     catalog = _InMemoryServiceCatalogRepository()
     assert isinstance(catalog, ServiceCatalogRepository)
 
@@ -208,8 +278,31 @@ def test_service_catalog_repository_protocol_runtime_check() -> None:
         price=Money(amount=Decimal("2000.00"), currency="DZD"),
     )
     catalog.add(item)
+    stored_item = catalog.get(CLINIC_ID, item.id)
+    assert stored_item is not None
+    assert stored_item.version == 0
+
+    # Version ownership: save increments version from 0 to 1
     catalog.save(item, expected_version=0)
-    assert catalog.get(CLINIC_ID, item.id) == item
+    saved_item = catalog.get(CLINIC_ID, item.id)
+    assert saved_item is not None
+    assert saved_item.version == 1
+
+    # Stale save rejected
+    with pytest.raises(ConcurrencyError):
+        catalog.save(item, expected_version=0)
+
+    # Missing item raises NotFoundError
+    with pytest.raises(NotFoundError):
+        missing_item = ServiceCatalogItem(
+            id=UUID("00000000-0000-0000-0000-000000000099"),
+            clinic_id=CLINIC_ID,
+            code="MISSING",
+            description="Missing Item",
+            price=Money(amount=Decimal("100.00"), currency="DZD"),
+        )
+        catalog.save(missing_item, expected_version=0)
+
     active_page = catalog.list_active(CLINIC_ID, PageRequest(limit=10))
     assert len(active_page.items) == 1
     assert active_page.next_cursor is None

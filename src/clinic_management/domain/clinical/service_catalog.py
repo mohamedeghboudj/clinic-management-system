@@ -96,7 +96,6 @@ class ServiceCatalogItem(Entity):
         """
         _validate_price(price)
         self.price = price
-        self.version += 1
 
     def deactivate(self) -> None:
         """Mark the catalogue item as inactive.
@@ -105,12 +104,10 @@ class ServiceCatalogItem(Entity):
         historical reference.
         """
         self.active = False
-        self.version += 1
 
     def activate(self) -> None:
         """Restore the catalogue item to active status."""
         self.active = True
-        self.version += 1
 
 
 def _validate_price(price: Money) -> None:

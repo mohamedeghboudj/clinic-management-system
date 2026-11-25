@@ -75,10 +75,14 @@ class Consultation(Entity):
         if self.finalized_at is not None:
             require_utc(self.finalized_at)
 
-        self.note = validate_clinical_text(
-            self.note,
-            field="note",
-            max_length=_NOTE_MAX_LENGTH,
+        object.__setattr__(
+            self,
+            "note",
+            validate_clinical_text(
+                self.note,
+                field="note",
+                max_length=_NOTE_MAX_LENGTH,
+            ),
         )
 
         if not isinstance(self.status, ConsultationStatus):
@@ -86,6 +90,24 @@ class Consultation(Entity):
                 code="INVALID_VALUE",
                 message_key="clinical.consultation.status.invalid",
             )
+
+    def __setattr__(self, name: str, value: object) -> None:
+        """Prevent modifying the clinical note directly once finalized.
+
+        Args:
+            name: Attribute name being modified.
+            value: Candidate attribute value.
+
+        Raises:
+            InvalidTransitionError: If attempting to overwrite ``note`` on a
+                consultation that has already been finalized.
+        """
+        if name == "note" and getattr(self, "status", None) is ConsultationStatus.FINAL:
+            raise InvalidTransitionError(
+                code="INVALID_TRANSITION",
+                message_key="clinical.consultation.note.immutable",
+            )
+        super().__setattr__(name, value)
 
     # ------------------------------------------------------------------
     # Commands
@@ -137,4 +159,3 @@ class Consultation(Entity):
         self.status = ConsultationStatus.FINAL
         self.finalized_at = at
         self.updated_at = at
-        self.version += 1

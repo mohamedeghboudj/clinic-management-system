@@ -300,7 +300,6 @@ class Prescription(Entity):
             )
         self.status = PrescriptionStatus.ISSUED
         self.issued_at = at
-        self.version += 1
 
     def cancel(self, reason: str, *, at: datetime) -> None:
         """Cancel the prescription with a mandatory reason.
@@ -332,7 +331,6 @@ class Prescription(Entity):
         self.status = PrescriptionStatus.CANCELLED
         self.cancel_reason = reason.strip()
         self.cancelled_at = at
-        self.version += 1
 
     # ------------------------------------------------------------------
     # Private helpers
