@@ -57,6 +57,7 @@ testpaths = ["tests"]
 addopts = "--strict-config --strict-markers -ra"
 markers = [
     "billing_contract: independent M1 contract tests awaiting M5 implementation",
+    "scheduling_contract: independent M4 contract tests awaiting M3 implementation",
     "integration: explicitly isolated remote-database tests, never production",
 ]
 
