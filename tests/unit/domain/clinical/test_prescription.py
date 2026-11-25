@@ -200,7 +200,7 @@ def test_prescription_lifecycle_draft_issue_and_cancel() -> None:
     prescription.issue(at=NOW)
     assert prescription.status.value == PrescriptionStatus.ISSUED.value
     assert prescription.issued_at == NOW
-    assert prescription.version == 1
+    assert prescription.version == 0
 
     # Cannot modify issued prescription
     item2 = PrescriptionItem(
@@ -221,7 +221,7 @@ def test_prescription_lifecycle_draft_issue_and_cancel() -> None:
     assert prescription.status.value == PrescriptionStatus.CANCELLED.value
     assert prescription.cancel_reason == "Patient reported adverse sensitivity."
     assert prescription.cancelled_at == LATER
-    assert prescription.version == 2
+    assert prescription.version == 0
 
     # Cannot cancel already cancelled
     with pytest.raises(InvalidTransitionError):
@@ -242,6 +242,69 @@ def test_prescription_lifecycle_draft_issue_and_cancel() -> None:
     # Can cancel from DRAFT
     draft_p.cancel("No longer needed", at=NOW)
     assert draft_p.status is PrescriptionStatus.CANCELLED
+
+
+def test_prescription_joint_m1_m4_issue_save_reload() -> None:
+    """Joint M1/M4 test: draft prescription is issued, saved via store, and reloaded."""
+    from tests.support.store import MemoryStore
+    from tests.support.unit_of_work import MemoryUnitOfWork
+
+    store = MemoryStore()
+    prescription = Prescription(
+        id=UUID("00000000-0000-0000-0000-000000000045"),
+        clinic_id=CLINIC_ID,
+        patient_id=PATIENT_ID,
+        doctor_id=DOCTOR_ID,
+    )
+    med = Medication(name="Amoxicillin", strength="500 mg")
+    item = PrescriptionItem(
+        medication=med,
+        dose="1 capsule",
+        route="oral",
+        frequency="three times daily",
+        duration="7 days",
+    )
+    prescription.add_item(item)
+
+    # 1. Seed initial draft in store
+    store.replace_collection("prescriptions", {prescription.id: prescription})
+    assert prescription.version == 0
+
+    # 2. Issue prescription in domain
+    prescription.issue(at=NOW)
+    assert prescription.status.value == PrescriptionStatus.ISSUED.value
+    assert prescription.issued_at == NOW
+    # Version remains 0 in domain; foundation store advances it on save
+    assert prescription.version == 0
+
+    # 3. Save via M1 foundation store versioned save
+    unit = MemoryUnitOfWork(store)
+    with unit:
+        store.save_versioned("prescriptions", prescription, expected_version=0)
+        unit.commit()
+
+    # 4. Reload from store and verify version incremented to 1
+    reloaded = store.read_collection("prescriptions")[prescription.id]
+    assert isinstance(reloaded, Prescription)
+    assert reloaded.status.value == PrescriptionStatus.ISSUED.value
+    assert reloaded.issued_at == NOW
+    assert reloaded.version == 1
+    assert prescription.version == 0
+
+    # 5. Cancel reloaded prescription and save with expected_version=1
+    reloaded.cancel("Adverse reaction observed", at=LATER)
+    assert reloaded.status.value == PrescriptionStatus.CANCELLED.value
+    assert reloaded.cancel_reason == "Adverse reaction observed"
+    assert reloaded.version == 1
+
+    with unit:
+        store.save_versioned("prescriptions", reloaded, expected_version=1)
+        unit.commit()
+
+    reloaded2 = store.read_collection("prescriptions")[prescription.id]
+    assert isinstance(reloaded2, Prescription)
+    assert reloaded2.status.value == PrescriptionStatus.CANCELLED.value
+    assert reloaded2.version == 2
 
 
 def test_prescription_item_management_and_validation() -> None:
@@ -325,7 +388,7 @@ def test_service_catalog_item_creation_and_price_change() -> None:
     new_price = Money(amount=Decimal("3000.00"), currency="DZD")
     item.change_price(new_price)
     assert item.price == new_price
-    assert item.version == 1
+    assert item.version == 0
 
 
 def test_service_catalog_item_activation_lifecycle() -> None:
@@ -339,11 +402,11 @@ def test_service_catalog_item_activation_lifecycle() -> None:
     )
     item.deactivate()
     assert item.active is False
-    assert item.version == 1
+    assert item.version == 0
 
     item.activate()
     assert bool(item.active) is True
-    assert item.version == 2
+    assert item.version == 0
 
 
 def test_service_catalog_item_rejects_negative_price_or_empty_code() -> None:

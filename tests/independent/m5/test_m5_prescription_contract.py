@@ -251,7 +251,7 @@ def test_prescription_transition_guards_and_failure_atomicity() -> None:
 
     prescription.issue(at=T0)
     assert prescription.status.value == PrescriptionStatus.ISSUED.value
-    assert prescription.version == 1
+    assert prescription.version == 0
 
     with pytest.raises(InvalidTransitionError):
         prescription.issue(at=T1)
@@ -261,12 +261,12 @@ def test_prescription_transition_guards_and_failure_atomicity() -> None:
     assert prescription.status.value == PrescriptionStatus.ISSUED.value
     assert prescription.cancel_reason is None
     assert prescription.cancelled_at is None
-    assert prescription.version == 1
+    assert prescription.version == 0
 
     with pytest.raises(ValidationError):
         prescription.cancel("Valid reason", at=NAIVE_DT)
     assert prescription.status.value == PrescriptionStatus.ISSUED.value
-    assert prescription.version == 1
+    assert prescription.version == 0
 
 
 def test_service_catalog_item_validates_zero_and_negative_money_prices() -> None:
