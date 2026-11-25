@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import time
 from uuid import UUID, uuid4
 
@@ -19,7 +20,7 @@ _ALGIERS = "Africa/Algiers"
 
 
 def _default_hours(tz: str = _ALGIERS) -> OpeningHours:
-    """Build a standard Mon–Fri 08:00–17:00 ``OpeningHours`` for a given timezone."""
+    """Build a standard Monâ€“Fri 08:00â€“17:00 ``OpeningHours`` for a given timezone."""
     periods = tuple(
         OpeningPeriod(weekday=d, opens_at=time(8), closes_at=time(17)) for d in range(5)
     )
@@ -88,6 +89,28 @@ class TestClinicConstruction:
         assert clinic.active is True
         assert clinic.currency == "DZD"
         assert clinic.version == 0
+
+    def test_invalid_address_schedule_and_active_flag_rejected(self) -> None:
+        """Reject malformed field types when reconstructing a clinic."""
+        clinic = _make_clinic()
+        with pytest.raises(ValidationError) as error:
+            replace(clinic, address="invalid")  # type: ignore[arg-type]
+        assert error.value.message_key == "clinic.address.invalid"
+        with pytest.raises(ValidationError) as error:
+            replace(clinic, opening_hours="invalid")  # type: ignore[arg-type]
+        assert error.value.message_key == "clinic.opening_hours.invalid"
+        with pytest.raises(ValidationError) as error:
+            replace(clinic, active=1)  # type: ignore[arg-type]
+        assert error.value.message_key == "clinic.active.invalid"
+
+    def test_invalid_schedule_update_preserves_existing_hours(self) -> None:
+        """Reject invalid updates before replacing the existing schedule."""
+        clinic = _make_clinic()
+        original = clinic.opening_hours
+        with pytest.raises(ValidationError) as error:
+            clinic.update_opening_hours("invalid")  # type: ignore[arg-type]
+        assert error.value.message_key == "clinic.opening_hours.invalid"
+        assert clinic.opening_hours is original
 
     def test_name_stripped(self) -> None:
         """Leading/trailing whitespace in name is stripped."""
