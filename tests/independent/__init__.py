@@ -1,1 +1,1 @@
-"""Independent peer test suites."""
+"""Tests authored independently of the submitted production implementation."""
