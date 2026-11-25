@@ -1,1 +1,1 @@
-"""Independent verification test package."""
+"""Tests authored independently of the submitted production implementation."""

@@ -50,18 +50,18 @@ features never receive passing placeholder tests.
 
 ## Structure and ownership
 
-| Location | Purpose / owner |
-| --- | --- |
-| `src/clinic_management/domain/shared/` | M1 identity, errors, event envelopes; M5 adds Money, M3 TimeSlot, M2 contact/address. |
-| `src/clinic_management/domain/people/`, `access/` | M2 profiles, membership and authorization. |
-| `src/clinic_management/domain/facilities/`, `scheduling/` | M3 clinic resources and scheduling. |
-| `src/clinic_management/domain/clinical/` | M4 notes, prescriptions and service catalogue. |
-| `src/clinic_management/domain/billing/` | M5 invoices and payment records. |
-| `application/contracts/`, `application/ports/` | M1 shared DTOs/ports; each member adds their feature contracts. |
-| `infrastructure/`, `api/`, `desktop/`, `bootstrap/` | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Week 1. |
-| `tests/support/` | Deterministic clocks/IDs and single-threaded rollback/version fakes. |
-| `scripts/` | Offline checks, foundation demo and explicit GitHub policy administration. |
-| `docs/` | Architecture, handoff contracts, operations and review evidence. |
+| Location                                                  | Purpose / owner                                                                          |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `src/clinic_management/domain/shared/`                    | M1 identity, errors, event envelopes; M5 adds Money, M3 TimeSlot, M2 contact/address.    |
+| `src/clinic_management/domain/people/`, `access/`         | M2 profiles, membership and authorization.                                               |
+| `src/clinic_management/domain/facilities/`, `scheduling/` | M3 clinic resources and scheduling.                                                      |
+| `src/clinic_management/domain/clinical/`                  | M4 notes, prescriptions and service catalogue.                                           |
+| `src/clinic_management/domain/billing/`                   | M5 invoices and payment records.                                                         |
+| `application/contracts/`, `application/ports/`            | M1 shared DTOs/ports; each member adds their feature contracts.                          |
+| `infrastructure/`, `api/`, `desktop/`, `bootstrap/`       | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Week 1. |
+| `tests/support/`                                          | Deterministic clocks/IDs and single-threaded rollback/version fakes.                     |
+| `scripts/`                                                | Offline checks, foundation demo and explicit GitHub policy administration.               |
+| `docs/`                                                   | Architecture, handoff contracts, operations and review evidence.                         |
 
 No domain module imports SQLAlchemy, FastAPI, Qt, application adapters or tests.
 Account roles are composed, not represented by empty Person subclasses. Preserve
