@@ -18,27 +18,19 @@ def main() -> int:
     Returns:
         Zero if no candidate secrets are found, otherwise one.
     """
-    # Locate baseline relative to repository root (parent of scripts directory)
-    repo_root = Path(__file__).resolve().parents[1]
-    baseline_path = repo_root / ".secrets.baseline"
-    if not baseline_path.is_file():
-        print(f"Error: baseline file not found at {baseline_path}")
-        raise SystemExit(1)
-
-    from detect_secrets.core.baseline import load, load_from_file
-
+    baseline_path = Path(__file__).resolve().parents[1] / ".secrets.baseline"
     try:
-        baseline_dict = load_from_file(str(baseline_path))
-        baseline_collection = load(baseline_dict)
-    except (OSError, json.JSONDecodeError) as exc:
-        # Critical error: malformed or unreadable baseline -> abort.
-        print(f"Error: could not load baseline ({baseline_path}): {exc}")
-        raise SystemExit(1) from exc
+        baseline = SecretsCollection.load_from_baseline(
+            json.loads(baseline_path.read_text(encoding="utf-8"))
+        )
+    except OSError, ValueError, TypeError, KeyError:
+        print("Secret scan failed: unreadable baseline")
+        return 1
 
-    # Scan maintained project files in current workspace (respects tmp_path in tests).
+    root = Path.cwd()
     secrets = SecretsCollection()
     with default_settings():
-        for path in project_files(Path.cwd().resolve()):
+        for path in project_files(root):
             if path.name in {"requirements-dev.txt", ".secrets.baseline"} or path.suffix in {
                 ".png",
                 ".pdf",
@@ -47,11 +39,9 @@ def main() -> int:
                 continue
             if path.name.startswith((".coverage", "coverage.")):
                 continue
-            secrets.scan_file(str(path))
+            secrets.scan_file(str(path.relative_to(root)))
 
-    # Apply baseline subtraction.
-    secrets = secrets - baseline_collection
-    findings = list(secrets)
+    findings = list(secrets - baseline)
     print(f"Secret scan: {len(findings)} candidate(s)")
     return int(bool(findings))
 
