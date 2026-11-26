@@ -1,11 +1,13 @@
 """Run the Week 1 exit scenario with synthetic records and the team's memory transaction."""
 
 from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import replace
 from datetime import time, timedelta
 from decimal import Decimal
 from uuid import UUID
 
+from clinic_management.domain.access.audit import AuditEntry
 from clinic_management.domain.access.enums import AccessScope, Permission, Role
 from clinic_management.domain.access.grants import RoleGrant
 from clinic_management.domain.access.policy import AccessPolicy, ResourceContext
@@ -15,9 +17,12 @@ from clinic_management.domain.billing.enums import PaymentMethod, SettlementStat
 from clinic_management.domain.billing.invoice import Invoice
 from clinic_management.domain.billing.invoice_line import InvoiceLine
 from clinic_management.domain.billing.payment import Payment
+from clinic_management.domain.billing.reversal import validate_reversal
+from clinic_management.domain.clinical.amendment import ClinicalAmendment
 from clinic_management.domain.clinical.consultation import Consultation
 from clinic_management.domain.clinical.medication import Medication
 from clinic_management.domain.clinical.prescription import Prescription, PrescriptionItem
+from clinic_management.domain.clinical.record_entry import ClinicalEntry
 from clinic_management.domain.facilities.clinic import Clinic
 from clinic_management.domain.facilities.enums import RoomType
 from clinic_management.domain.facilities.opening_hours import OpeningHours, OpeningPeriod
@@ -29,7 +34,12 @@ from clinic_management.domain.people.staff_profile import StaffProfile
 from clinic_management.domain.scheduling.appointment import Appointment
 from clinic_management.domain.shared.contact import ContactInfo
 from clinic_management.domain.shared.entity import Entity
-from clinic_management.domain.shared.errors import InvalidTransitionError, PermissionDeniedError
+from clinic_management.domain.shared.errors import (
+    InvalidTransitionError,
+    PermissionDeniedError,
+    ValidationError,
+)
+from clinic_management.domain.shared.events import DomainEvent
 from clinic_management.domain.shared.money import Money
 from clinic_management.domain.shared.time_slot import TimeSlot
 from tests.support.fixtures import FIXED_TIME
@@ -210,11 +220,66 @@ def _visit(
         )
     )
     rx.issue(at=slot.end)
+    _amend(note, ids)
     appointment.complete(at=slot.end)
     records: tuple[Entity, ...] = (appointment, note, rx)
     for entity in records:
         store.replace_collection(type(entity).__name__, {entity.id: entity})
     return note
+
+
+def _amend(note: Consultation, ids: Iterator[UUID]) -> None:
+    """Check that a correction references the original entry and preserves its text.
+
+    Args:
+        note: Final consultation from the visit.
+        ids: Source of synthetic identifiers.
+    """
+    entry = ClinicalEntry(
+        id=next(ids),
+        clinic_id=note.clinic_id,
+        patient_id=note.patient_id,
+        consultation_id=note.id,
+        author_id=note.doctor_id,
+        kind="NOTE",
+        content=note.note,
+        recorded_at=note.updated_at,
+    )
+    correction = ClinicalAmendment(
+        id=next(ids),
+        clinic_id=entry.clinic_id,
+        patient_id=entry.patient_id,
+        entry_id=entry.id,
+        author_id=entry.author_id,
+        reason="Synthetic correction",
+        replacement_content="Corrected synthetic visit",
+        recorded_at=entry.recorded_at,
+    )
+    if (
+        not correction.applies_to(entry)
+        or entry.content != note.note
+        or correction.replacement_content == entry.content
+    ):
+        raise RuntimeError("Correction did not preserve the original entry")
+
+
+@contextmanager
+def _expect_rejection(key: str) -> Iterator[None]:
+    """Require a specific domain validation failure.
+
+    Args:
+        key: Expected domain message key.
+
+    Yields:
+        Control to the proposed invalid transaction.
+    """
+    try:
+        yield
+    except ValidationError as exc:
+        if exc.message_key != key:
+            raise
+    else:
+        raise RuntimeError(f"Expected rejection {key}")
 
 
 def clinic_demo() -> None:
@@ -256,10 +321,35 @@ def clinic_demo() -> None:
         )
         store.replace_collection("Invoice", {invoice.id: invoice})
         store.replace_collection("Payment", {payment.id: payment})
+        audit = AuditEntry(
+            id=next(ids),
+            clinic_id=invoice.clinic_id,
+            actor_id=cashier_id,
+            action="PAYMENT_RECORD",
+            resource_type="Payment",
+            resource_id=payment.id,
+            outcome="SUCCESS",
+            occurred_at=at,
+            correlation_id=payment.idempotency_key,
+        )
+        event = DomainEvent(
+            event_id=next(ids),
+            event_type="PAYMENT_RECORDED",
+            clinic_id=invoice.clinic_id,
+            entity_id=payment.id,
+            entity_version=0,
+            actor_id=cashier_id,
+            occurred_at=at,
+            correlation_id=payment.idempotency_key,
+        )
+        transaction.stage_audit(audit)
+        transaction.stage_event(event)
         transaction.commit()
 
     try:
-        with MemoryUnitOfWork(store):
+        with MemoryUnitOfWork(store) as rejected:
+            rejected.stage_audit(replace(audit, id=next(ids)))
+            rejected.stage_event(replace(event, event_id=next(ids)))
             store.replace_collection("Payment", {})
             note.update_note("Rejected amendment", at=at)
     except InvalidTransitionError:
@@ -269,13 +359,18 @@ def clinic_demo() -> None:
     saved = store.read_collection("Payment").get(payment.id)
     if not isinstance(saved, Payment):
         raise RuntimeError("Rollback lost the committed payment")
+    snapshot = store.snapshot()
+    if snapshot.audit_entries != (audit,) or snapshot.outbox_events != (event,):
+        raise RuntimeError("Rollback changed the committed payment audit or outbox")
+    with _expect_rejection("payment.amount.exceeds_outstanding"):
+        validate_payment(invoice, fee, (saved,), ())
+    with _expect_rejection("reversal.exceeds_payment"):
+        validate_reversal(saved, fee, ())
     balance = calculate_balance(invoice, (saved,), ())
     if (
         balance.outstanding.amount != Decimal("600")
         or balance.settlement != SettlementStatus.PARTIAL
     ):
         raise RuntimeError("The committed invoice has an incorrect partial balance")
-    print(
-        "Visit passed: authorized doctor, completed appointment, final note and issued prescription."
-    )
+    print("Visit passed: authorized doctor, completed appointment, final note and prescription.")
     print("Invoice 1000 DZD, paid 400 DZD, outstanding 600 DZD. Denial and rollback verified.")

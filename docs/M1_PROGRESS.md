@@ -1,17 +1,22 @@
 # M1 progress and required independent handoff
 
-## M1 contribution · 25–27 November 2026
+## M1 contribution Â· 25â€“27 November 2026
 
 Mohamed coordinated the cross-feature audit, reproduced the failures and contributed
-the following repairs on the original developers’ branches. Feature ownership stays
-with M2–M5.
+the following repairs on the original developersâ€™ branches. Feature ownership stays
+with M2â€“M5.
 
 | Contribution | Review evidence |
 | --- | --- |
 | Protected finalized consultation state and validated status/timestamp pairs on rehydration. Propagated the fix through the prescription and design branches. | [#15](https://github.com/mohamedeghboudj/clinic-management-system/pull/15), [#16](https://github.com/mohamedeghboudj/clinic-management-system/pull/16), [#17](https://github.com/mohamedeghboudj/clinic-management-system/pull/17) |
 | Repaired the scanner baseline and dependency check. Added a relocation test demonstrating that a new finding in the same file still fails the gate. | [#21](https://github.com/mohamedeghboudj/clinic-management-system/pull/21) |
 | Added clinic validation and failure-atomicity tests, diagnosed the hosted Windows timezone failure, and pinned the IANA data in the runtime and hash lock. | [#22](https://github.com/mohamedeghboudj/clinic-management-system/pull/22) |
-| Built the connected in-memory visit, added it to CI, reconciled S1–S8 with the sprint backlog, and rehearsed the squash sequence against main. | [Increment evidence](requirements.md#week-1-increment-verification) · [Integration issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4) |
+| Built the connected in-memory visit, added it to CI, reconciled S1â€“S8 with the sprint backlog, and rehearsed the squash sequence against main. | [Increment evidence](requirements.md#week-1-increment-verification) Â· [Integration issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4) |
+
+The combined Python 3.14.10 suite passed **794 tests with zero skips**. All five
+feature heads were included. The merge rehearsal applied #21, #22, #15, #16 and #17
+as separate squash commits before the [integration PR #39](https://github.com/mohamedeghboudj/clinic-management-system/pull/39).
+Human approvals and final acceptance are tracked on GitHub.
 
 Reviewers can run `python -m scripts.demo_model` to verify the 1,000/400/600 DZD
 scenario and rollback. The records below are dated handoffs.
@@ -50,7 +55,7 @@ branch targets and workflow observations there refer to that earlier snapshot.
 - Assigned reviewers are M3 @SamirKor and M4 @MohamedAmine-dash, both with
   verified write access. Their final approvals remain required; never use an
   author/bot approval to replace either assigned review.
-- M2–M5 models are not present: the full clinic workflow demo cannot yet run.
+- M2â€“M5 models are not present: the full clinic workflow demo cannot yet run.
   `--foundation-only` exercises actual implemented transaction contracts; default
   invocation reports pending integration instead of fake success.
 - M5 billing implementation is not present: prepared independent contracts are
@@ -63,7 +68,7 @@ branch targets and workflow observations there refer to that earlier snapshot.
 
 ## Review sequence
 
-Contracts/tooling → transaction fakes → demo/design/handoff. Dependent PRs may be
+Contracts/tooling â†’ transaction fakes â†’ demo/design/handoff. Dependent PRs may be
 stacked but cannot bypass the two-review/independent-test gate. Other members can
 branch from the appropriate reviewed foundation ref while main acceptance waits;
 record that temporary dependency and retarget after its PR merges.
@@ -86,9 +91,9 @@ record that temporary dependency and retarget after its PR merges.
 
 | Order | Branch / draft PR | Dependency |
 | --- | --- | --- |
-| 1 | [Contracts/tooling #5](https://github.com/mohamedeghboudj/clinic-management-system/pull/5) — `feature/w1-foundation-contracts` | main |
-| 2 | [Transaction fakes #6](https://github.com/mohamedeghboudj/clinic-management-system/pull/6) — `feature/w1-foundation-fakes` | #5; retarget to main after #5 merges |
-| 3 | [Demo and handoff #7](https://github.com/mohamedeghboudj/clinic-management-system/pull/7) — `feature/w1-foundation-demo` | #6; retarget after preceding acceptance |
+| 1 | [Contracts/tooling #5](https://github.com/mohamedeghboudj/clinic-management-system/pull/5) â€” `feature/w1-foundation-contracts` | main |
+| 2 | [Transaction fakes #6](https://github.com/mohamedeghboudj/clinic-management-system/pull/6) â€” `feature/w1-foundation-fakes` | #5; retarget to main after #5 merges |
+| 3 | [Demo and handoff #7](https://github.com/mohamedeghboudj/clinic-management-system/pull/7) â€” `feature/w1-foundation-demo` | #6; retarget after preceding acceptance |
 
 All new required quality, Linux/Windows unit, dependency-security and CodeQL
 checks passed for each PR. The top implementation snapshot is commit
@@ -119,15 +124,15 @@ No Telegram secret, topic or user-owned workflow was changed.
 - [Desktop preference design #3](https://github.com/mohamedeghboudj/clinic-management-system/issues/3)
 - [Full demo, M5 verification and M3/M4 reviews #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4)
 
-## Confirmed GitHub assignments — 1 November
+## Confirmed GitHub assignments â€” 1 November
 
 M2 @ahmed-ammiche and M4 @MohamedAmine-dash have verified write access.
-PRs #5–#7 assign M1 implementation and M2 independent testing; review
+PRs #5â€“#7 assign M1 implementation and M2 independent testing; review
 requests name M3 @SamirKor and M4 @MohamedAmine-dash while PRs stay draft.
-Issue #1 assigns M1/M2/M3/M4; #2–#4 assign M1 coordination. These
+Issue #1 assigns M1/M2/M3/M4; #2â€“#4 assign M1 coordination. These
 assignments do not establish completed tests, approvals or merges.
 
-## Active rulesets — 1 November
+## Active rulesets â€” 1 November
 
 Main ruleset 26311417 requires PR-only updates, two current approvals, code-owner
 review, resolved conversations, current app-bound CI and squash merging; it blocks
