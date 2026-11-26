@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — M1 foundation
+## Unreleased · Week 1 model increment
+
+- Connect access, scheduling, consultations, prescriptions and billing in an offline visit.
+- Exercise the visit and rollback on Linux and Windows in CI.
+- Protect finalized consultations, make the scanner baseline portable and ship timezone data for scheduling.
+- Record the model evidence and remaining release checks for stories S1–S8 in [requirements](docs/requirements.md).
+
+## Historical — M1 foundation
 
 - Activate main and working-branch rulesets, require GitHub Actions as the source
   of required checks, and version their idempotent administration/readback support.

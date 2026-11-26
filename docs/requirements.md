@@ -1,7 +1,7 @@
 # Initial requirements baseline
 
 Status: derived from the project blueprint, pending Product Owner/clinic validation.
-The M1 foundation implements shared contracts, not these complete staff features.
+The Week 1 model evidence and the remaining release checks appear below.
 
 | Story | Outcome / acceptance | Feature owner |
 | --- | --- | --- |
@@ -28,3 +28,23 @@ authorization, sockets and real restore require integration evidence later.
 Deferred: surgeries, labs, admissions/beds, materials/stock, purchasing, expenses,
 advance patient credit, broad reports, patient portal and external services. Their
 member-owned design notes do not constitute implemented features.
+
+
+## Week 1 increment verification
+
+Run `python -m scripts.demo_model` from the installed development checkout. The Windows and Ubuntu unit
+jobs run this command after the tests and coverage gate. The scenario uses
+synthetic identities, a deterministic clock and memory transactions.
+
+| Stories | Executable evidence at the model checkpoint | Evidence due later |
+| --- | --- | --- |
+| S1–S2 | The demo registers a patient, checks an assigned doctor and a cashier, and denies a secretary's clinical write. People and access suites cover validation and denial paths. | Individual login, direct API authorization, clinic-unique numbers and paged remote search. |
+| S3 | A bookable room and an open time slot lead to check-in and completion. Scheduling contracts exercise adjacent intervals and early no-show rejection. | Two connections competing for the same doctor or room. |
+| S4 | The linked consultation is finalized and its prescription issued. Clinical tests cover amendments, finalized record reconstruction and versioned saves. | Durable clinical history and direct endpoint authorization. |
+| S5–S6 | A 1,000 DZD invoice links to the visit. An authorized 400 DZD payment leaves 600 DZD outstanding. Billing tests exercise snapshot, reversal and overpayment rules. | Durable same-key replay and reconciliation after a lost response. |
+| S7–S8 | The memory transaction rolls back a rejected edit and preserves the committed payment. Foundation checks cover rollback, audit and outbox. | Two workstations, reconnect, measured latency, installation and a timed remote restore. |
+
+Product Owner validation, assigned human reviews and the release demonstration
+are separate acceptance records. The [Week 1 increment](https://app.notion.com/p/422016453ab08187ac1fca0617237c68)
+tracks team acceptance and [issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4)
+tracks integration review.

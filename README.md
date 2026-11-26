@@ -3,9 +3,9 @@
 Python desktop and modular backend project for clinic staff. The authoritative
 database will be remote PostgreSQL; Week 1 foundation commands use memory only.
 
-The foundation is being implemented by M1 (Mohamed). Patient/access, scheduling,
-clinical and billing implementations belong to M2–M5. Empty feature packages are
-documented extension locations, not claims that those features work.
+Week 1 joins five contributions in a synthetic clinic visit. M1 owns the foundation
+and integration, M2 people and access, M3 rooms and scheduling, M4 clinical
+records, and M5 billing. The default demo runs entirely in memory.
 
 ## Start in a fresh Conda environment
 
@@ -16,12 +16,12 @@ conda env create --prefix ./.conda-env --file environment.yml
 conda activate ./.conda-env
 python -m pip install --require-hashes -r requirements-dev.txt
 python -m pip install --no-deps --no-build-isolation -e .
-python -m scripts.demo_model --foundation-only
+python -m scripts.demo_model
 ```
 
 Install the local hooks with `python -m pre_commit install` after activating the environment.
 Do not reuse the base Conda environment. `environment.yml` defines the portable
-minor-version baseline; `requirements-dev.txt` hash-locks Python tooling. Native
+minor-version baseline; `requirements-dev.txt` hash-locks developer tools and runtime timezone data. Native
 Conda dependencies vary by operating system. CI uses clean Python 3.14 runners
 on Linux and Windows to check portability. No local database service is needed.
 
@@ -43,10 +43,10 @@ python -m scripts.check_coverage
 python -m build --no-isolation
 ```
 
-Tests in `tests/verification/` are M1 author verification, permitted by Mohamed.
-They do **not** replace M2's independent foundation tests. M1's billing contract
-tests are explicitly deferred until M5's implementation is available. Missing
-features never receive passing placeholder tests.
+The combined suite includes the independent billing, clinical and scheduling contracts.
+Run `python -m scripts.demo_model --foundation-only` to isolate transaction checks.
+The default demo also verifies the clinical access denial, the 600 DZD balance and rollback.
+See [the story-by-story acceptance evidence](docs/requirements.md#week-1-increment-verification).
 
 ## Structure and ownership
 
@@ -60,7 +60,7 @@ features never receive passing placeholder tests.
 | `application/contracts/`, `application/ports/`            | M1 shared DTOs/ports; each member adds their feature contracts.                          |
 | `infrastructure/`, `api/`, `desktop/`, `bootstrap/`       | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Week 1. |
 | `tests/support/`                                          | Deterministic clocks/IDs and single-threaded rollback/version fakes.                     |
-| `scripts/`                                                | Offline checks, foundation demo and explicit GitHub policy administration.               |
+| `scripts/`                                                | Offline checks, Week 1 clinic demo and explicit GitHub policy administration.               |
 | `docs/`                                                   | Architecture, handoff contracts, operations and review evidence.                         |
 
 No domain module imports SQLAlchemy, FastAPI, Qt, application adapters or tests.
@@ -69,7 +69,7 @@ the public M1 signatures in [the contract index](docs/contracts/foundation.md).
 
 ## GitHub workflow
 
-Use short-lived `feature/w1-foundation-*` branches and PRs into `main`. Two
+Use short-lived feature branches and PRs into `main`. Two
 assigned human approvals and independent testing remain mandatory. M2 is
 `@ahmed-ammiche`, M3 `@SamirKor`, M4 `@MohamedAmine-dash` and M5
 `@ayyoubbouchama`; all have verified write access. Never substitute

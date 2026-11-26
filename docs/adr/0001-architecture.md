@@ -1,6 +1,6 @@
 # ADR 0001: modular backend, thin desktop and remote persistence
 
-Status: implemented M1 foundation; human review and feature integration pending.
+Status: foundation merged. The Week 1 model integration is under review.
 Date: 2026-11-01. Sources: supplied Sommerville ch. 5–7, 17, 24–25 and the
 project's Meeting and Delivery Blueprint / Week 1 Member Implementation Guide.
 

@@ -1,4 +1,4 @@
-"""Demonstrate M1 rollback/outbox contracts without inventing M2-M5 features."""
+"""Demonstrate the Week 1 clinic workflow and its in-memory transaction contracts."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from uuid import UUID
 
 from clinic_management.application.contracts.paging import Page, PageRequest
 from clinic_management.application.ports.clock import Clock
+from scripts.clinic_visit_demo import clinic_demo
 from tests.support.clock import FrozenClock
 from tests.support.fixtures import FIXED_TIME, ProbeEntity, audit_fixture, event_fixture
 from tests.support.ids import SequenceIdGenerator
@@ -47,24 +48,21 @@ def foundation_demo() -> None:
     if page.has_next() or PageRequest().limit != 25 or clock.now() != FIXED_TIME:
         raise RuntimeError("A deterministic foundation contract failed")
     print("Foundation demo passed: two copied collections, rollback, one audit/outbox commit.")
-    print("This is infrastructure verification, not the complete clinic workflow.")
 
 
 def main() -> int:
-    """Run explicitly available foundation behavior or report missing integration.
+    """Run the foundation checks and, by default, the connected clinic visit.
 
     Returns:
-        Zero for the available foundation demo; two for pending clinic integration.
+        Zero after the requested demonstrations succeed.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--foundation-only", action="store_true")
     args = parser.parse_args()
-    if args.foundation_only:
-        foundation_demo()
-        return 0
-    print("Full clinic demo pending: M2 people/access, M3 scheduling, M4 clinical, M5 billing.")
-    print("Run --foundation-only for implemented M1 transaction contracts.")
-    return 2
+    foundation_demo()
+    if not args.foundation_only:
+        clinic_demo()
+    return 0
 
 
 if __name__ == "__main__":

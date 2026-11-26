@@ -4,7 +4,7 @@ Use the Python 3.14 Conda environment and run the README checks from the reposit
 root. Runtime packages belong in pinned `requirements.txt`; direct developer
 tools in `pyproject.toml` dependency-groups.dev, generated into `requirements-dev.in`
 and resolved with hashes into `requirements-dev.txt`.
-The current M1 runtime has no third-party dependency.
+Scheduling uses pinned IANA timezone data on systems without a timezone database.
 
 ```powershell
 python -m scripts.requirements_input --write
@@ -49,8 +49,7 @@ rerun checks. Squash-merge the reviewed PR, preserving contributor attribution.
 
 Author verification is allowed but is labelled separately. Two non-author human
 approvals apply after final changes, including test changes. A reviewer merges.
-All four teammates have verified write access. M1 work stays unmerged until
-M2's independent tests and M3/M4's final approvals are present. CODEOWNERS maps
+All four teammates have verified write access. M2 is the independent tester for M1, and M3/M4 are its assigned reviewers. CODEOWNERS maps
 the assigned pairs; GitHub requires only one matching owner's approval, so the
 second assigned approval must also be checked against the table above.
 Review requests may be assigned while a PR is draft; they are not approvals.
