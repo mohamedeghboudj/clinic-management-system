@@ -88,3 +88,7 @@ requirements_files = ["requirements.txt"]
 requirements_files_dev = ["requirements-dev.txt"]
 known_first_party = ["clinic_management", "scripts", "tests"]
 extend_exclude = [".conda-env", ".tools", "build", "dist"]
+
+# The standard library zoneinfo loads tzdata through importlib.resources.
+[tool.deptry.per_rule_ignores]
+DEP002 = ["tzdata"]
