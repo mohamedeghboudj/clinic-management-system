@@ -20,6 +20,8 @@ Start from the verified Sprint 1 freeze on `main`. Publish shared contracts firs
 | M4 | [S4 consultation and prescription #44](https://github.com/mohamedeghboudj/clinic-management-system/issues/44) | Assigned doctor finalizes, stale saves fail and amendments preserve the original note. |
 | M5 | [S5 invoice #45](https://github.com/mohamedeghboudj/clinic-management-system/issues/45), [S6 payment #46](https://github.com/mohamedeghboudj/clinic-management-system/issues/46) | Immutable service snapshots, concurrent retry yields one payment, lost acknowledgment reconciled. |
 
+M1 also coordinates [bounded adapter retries #2](https://github.com/mohamedeghboudj/clinic-management-system/issues/2) in Sprint 2 and non-sensitive [desktop preferences #3](https://github.com/mohamedeghboudj/clinic-management-system/issues/3) in Sprint 3. Test deadline exhaustion and lost acknowledgments during the connected visit. Verify preferences during clean installation.
+
 Proposed checkpoints are contracts at kickoff, remote smoke test, connected visit, two-client fault tests, then review on 3 December. Confirm remote development resources and backend hosting at kickoff. The planning baseline is Supabase Auth and hosted PostgreSQL behind the Python API. Keep database credentials on the server and restrict test environments to synthetic patients.
 
 ## Tracking and review
