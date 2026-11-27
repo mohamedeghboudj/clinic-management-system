@@ -2,7 +2,7 @@
 
 Status: foundation procedures and deployment design. No live service/database
 has been deployed; backend host, managed DB project/region and operational owners
-must be recorded before Week 2 connectivity work. Never invent production URLs,
+must be recorded before Sprint 2 connectivity work. Never invent production URLs,
 credentials or backup availability from a free-tier name.
 
 ## Development startup
@@ -55,7 +55,7 @@ issue or developer fixture while diagnosing a failure.
 5. If health fails, halt rollout; roll back code only to compatible schema, otherwise
    use the tested restore path. Never improvise destructive down-migrations.
 
-## Backups and remote restore drill — required in Week 4
+## Backups and remote restore drill — required in Sprint 3
 
 M1 coordinates automation/runbook; M2 checks restricted access/key separation;
 M3/M4/M5 reconcile restored scheduling/history/finance. Select a managed backup

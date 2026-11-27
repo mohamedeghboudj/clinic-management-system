@@ -1,4 +1,4 @@
-# Transport design — Week 1 specification
+# Transport design — Sprint 1 specification
 
 Status: DESIGN; no HTTP/GUI implementation. Later public endpoints use `/api/v1`.
 

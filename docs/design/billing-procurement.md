@@ -2,7 +2,7 @@
 
 **Owner:** M5 (`@ayyoubbouchama`) · **Reviewers:** M2, M3 (`@SamirKor`) · **Independent Tester:** M1 (`@mohamedeghboudj`)
 
-This document specifies the Week 2+ application use cases, transport mappers, desktop formatting helpers, and the 14 deferred credit, financial reporting, and procurement domain models defined in Section 6 of the Week 1 Member Implementation Guide. No Python classes are created for DESIGN items in Week 1.
+This document specifies the Sprint 2+ application use cases, transport mappers, desktop formatting helpers, and the 14 deferred credit, financial reporting, and procurement domain models defined in Section 6 of the Sprint 1 Member Implementation Guide. No Python classes are created for DESIGN items in Sprint 1.
 
 ---
 
@@ -17,7 +17,7 @@ Before combining figures in clinic reports, the domain enforces four strict dist
 
 ---
 
-## 2. Application Use Cases, Transport Mappers and Formatting (Week 2/3)
+## 2. Application Use Cases, Transport Mappers and Formatting (Sprint 2)
 
 ### 2.1 `RecordPayment.execute`
 - **Signature:** `RecordPayment.execute(self, command: RecordPaymentCommand, principal: Principal) -> PaymentReceipt`
@@ -243,7 +243,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Purpose:** Extension port for future clinic-specific or insurance-tier tax/discount calculation strategies when simple per-line rules are no longer sufficient.
 - **Proposed Fields & Signatures:**
   - Protocol method: `calculate(self, subtotal: Money) -> Money`.
-- **Relationships, Cardinalities & Scope:** Injected into billing application use cases only when polymorphic pricing rules are required; Week 1 uses the direct deterministic formula on `InvoiceLine`.
+- **Relationships, Cardinalities & Scope:** Injected into billing application use cases only when polymorphic pricing rules are required; Sprint 1 uses the direct deterministic formula on `InvoiceLine`.
 - **States & Transitions:** Stateless `Protocol` interface.
 - **Errors:** `ValidationError(code="INVALID_VALUE")` if calculated result is negative or changes currency.
 - **Transaction, Concurrency & Security:** Pure calculation port; no database or network I/O.
@@ -254,9 +254,9 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 
 ---
 
-## 4. Future Remote-PostgreSQL Concurrency Test Scenarios (Week 2 Integration)
+## 4. Future Remote-PostgreSQL Concurrency Test Scenarios (Sprint 2 Integration)
 
-To be executed against a real remote PostgreSQL database instance during Week 2 integration testing:
+To be executed against a real remote PostgreSQL database instance during Sprint 2 integration testing:
 1. **Concurrent Same-Key Same-Payload Test:** Spawn two concurrent asynchronous workers delivering identical `RecordPaymentCommand` with key `K1` and amount `400 DZD` for a `1000 DZD` invoice. Assert exactly 1 payment record is created, exactly 1 audit/outbox entry is appended, and both workers receive identical `PaymentReceipt` snapshots.
 2. **Concurrent Same-Key Mutated-Payload Test:** Spawn two concurrent workers with key `K1`, where Worker A sends `400 DZD` and Worker B sends `500 DZD`. Assert the winner commits successfully and the loser raises `ConflictError(code="IDEMPOTENCY_KEY_REUSED")` without mutating invoice balances.
 3. **Concurrent Distinct-Key Overpayment Test:** Spawn two workers with distinct keys `K1` and `K2`, sending `700 DZD` each concurrently against a `1000 DZD` invoice under `FOR UPDATE` serialization. Assert the winner commits `700 DZD` and the loser's validation correctly observes `300 DZD` remaining balance and raises `ValidationError(code="PAYMENT_EXCEEDS_BALANCE")`.

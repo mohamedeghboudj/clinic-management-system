@@ -1,11 +1,14 @@
 # Clinic Management System
 
 Python desktop and modular backend project for clinic staff. The authoritative
-database will be remote PostgreSQL; Week 1 foundation commands use memory only.
+database will be remote PostgreSQL; Sprint 1 foundation commands use memory only.
 
-Week 1 joins five contributions in a synthetic clinic visit. M1 owns the foundation
+Sprint 1 joins five contributions in a synthetic clinic visit. M1 owns the foundation
 and integration, M2 people and access, M3 rooms and scheduling, M4 clinical
 records, and M5 billing. The default demo runs entirely in memory.
+
+See the [delivery plan](docs/delivery.md) for the three increments, sprint deadlines,
+implementation issues and the condition for starting Sprint 2.
 
 ## Start in a fresh Conda environment
 
@@ -46,7 +49,7 @@ python -m build --no-isolation
 The combined suite includes the independent billing, clinical and scheduling contracts.
 Run `python -m scripts.demo_model --foundation-only` to isolate transaction checks.
 The default demo also verifies the clinical access denial, the 600 DZD balance and rollback.
-See [the story-by-story acceptance evidence](docs/requirements.md#week-1-increment-verification).
+See [the story-by-story acceptance evidence](docs/requirements.md#sprint-1-increment-verification).
 
 ## Structure and ownership
 
@@ -58,9 +61,9 @@ See [the story-by-story acceptance evidence](docs/requirements.md#week-1-increme
 | `src/clinic_management/domain/clinical/`                  | M4 notes, prescriptions and service catalogue.                                           |
 | `src/clinic_management/domain/billing/`                   | M5 invoices and payment records.                                                         |
 | `application/contracts/`, `application/ports/`            | M1 shared DTOs/ports; each member adds their feature contracts.                          |
-| `infrastructure/`, `api/`, `desktop/`, `bootstrap/`       | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Week 1. |
+| `infrastructure/`, `api/`, `desktop/`, `bootstrap/`       | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Sprint 1. |
 | `tests/support/`                                          | Deterministic clocks/IDs and single-threaded rollback/version fakes.                     |
-| `scripts/`                                                | Offline checks, Week 1 clinic demo and explicit GitHub policy administration.               |
+| `scripts/`                                                | Offline checks, Sprint 1 clinic demo and explicit GitHub policy administration.               |
 | `docs/`                                                   | Architecture, handoff contracts, operations and review evidence.                         |
 
 No domain module imports SQLAlchemy, FastAPI, Qt, application adapters or tests.
@@ -94,8 +97,3 @@ while allowing normal author/tester commits and deletion after merge.
 - [Recovery and operation runbook](docs/runbook.md)
 - [M1 completion and external dependencies](docs/M1_PROGRESS.md)
 - [Security reporting and telemetry](SECURITY.md)
-
-The three planning documents live outside this standalone repository in the
-parent `Project/` directory as requested. The previous nonempty process charter
-was also preserved there as `Team-Process-Charter.pdf`. Historical scaffold
-contents remain recoverable through Git history.

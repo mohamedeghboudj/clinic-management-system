@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased · Week 1 model increment
+## Unreleased · Sprint 1 model increment
 
 - Connect access, scheduling, consultations, prescriptions and billing in an offline visit.
 - Exercise the visit and rollback on Linux and Windows in CI.

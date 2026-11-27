@@ -17,7 +17,8 @@ environment-specific absolute paths, local data or credentials in any lock file.
 ## Branches and commits
 
 Begin from updated `main`; create one cohesive `feature/<ticket>-<topic>` branch.
-M1's sequence is foundation contracts/tooling, fakes, then demo/design evidence.
+Link the implementation issue and its sprint milestone. Follow the
+[delivery plan](docs/delivery.md) for dependencies and the Sprint 1 freeze.
 Closely dependent work may use explicitly documented stacked PRs; never merge
 past independent tests or the required human reviews just to unblock a stack.
 

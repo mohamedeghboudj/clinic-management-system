@@ -1,8 +1,8 @@
 # Clinical Care Module — Design Specification
 
 **Author:** M4 (Clinical Care Lead)  
-**Sprint:** Sprint 1 — Week 1 Design Deliverable  
-**Status:** DESIGN ONLY — Specification for future increments. No production Python classes are created for these models in Week 1.
+**Sprint:** Sprint 1 design deliverable
+**Status:** DESIGN ONLY — Specification for future increments. No production Python classes are created for these models in Sprint 1.
 
 ---
 
@@ -10,7 +10,7 @@
 
 The clinical care domain manages the patient's medical records, consultations, prescriptions, amendments, treatment plans, allergies, laboratory workflows, and surgical procedures.
 
-In Sprint 1 (Week 1), core consultation finalization, immutable record entries, amendments, written prescriptions, and billable service items are **built** as pure Python domain models. The remaining models detailed below are **designed** for implementation in subsequent increments.
+In Sprint 1, core consultation finalization, immutable record entries, amendments, written prescriptions, and billable service items are **built** as pure Python domain models. The remaining models detailed below are **designed** for implementation in subsequent increments.
 
 All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolation. Access requires an authenticated `Principal` with verified doctor-patient care assignment (`Permission.CLINICAL_READ`, `Permission.CLINICAL_WRITE`, or `Permission.PRESCRIBE`). Business ownership alone never grants access to clinical narratives.
 
@@ -42,7 +42,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Querying page 1 (limit 25) of clinical entries for patient `P-101` returns 12 summaries with continuation cursor `None`.
   * *Invalid:* Requesting page with limit 150 raises `ValidationError(code="INVALID_VALUE", message_key="paging.limit.invalid")`.
-* **Future Issue / Dependency:** Issue [#32](https://github.com/mohamedeghboudj/clinic-management-system/issues/32) (Week 2 Query Service), depends on M2 `Patient` and M1 `PageRequest`.
+* **Future Issue / Dependency:** Issue [#32](https://github.com/mohamedeghboudj/clinic-management-system/issues/32) (Sprint 2 Query Service), depends on M2 `Patient` and M1 `PageRequest`.
 
 ---
 
@@ -270,7 +270,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 
 ## 3. Future Application Use-Case Contracts
 
-These command and query boundaries will be implemented in Week 2 under `application/clinical/`:
+These command and query boundaries will be implemented in Sprint 2 under `application/clinical/`:
 
 ### 3.1 FinalizeConsultation
 
@@ -370,7 +370,7 @@ class ConsultationDetail:
 
 ## 4. Traceability Matrix
 
-| Requirement / Blueprint Outcome | Domain Model (Week 1) | Design Spec (Week 1) | Target Use Case (Week 2) |
+| Requirement / Blueprint Outcome | Domain Model (Sprint 1) | Design Spec (Sprint 1) | Target Use Case (Sprint 2) |
 |---|---|---|---|
 | S4: Doctor records draft consultation and finalizes it | `Consultation`, `validation.py` | Section 3.1 | `FinalizeConsultation` |
 | S4: Finalized content amended without rewriting history | `ClinicalEntry`, `ClinicalAmendment` | Section 2.1 | `AmendClinicalEntry` |

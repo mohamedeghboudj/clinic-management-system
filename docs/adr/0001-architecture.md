@@ -1,8 +1,8 @@
 # ADR 0001: modular backend, thin desktop and remote persistence
 
-Status: foundation merged. The Week 1 model integration is under review.
+Status: foundation merged. The Sprint 1 model integration is under review.
 Date: 2026-11-01. Sources: supplied Sommerville ch. 5–7, 17, 24–25 and the
-project's Meeting and Delivery Blueprint / Week 1 Member Implementation Guide.
+project's Meeting and Delivery Blueprint / Sprint 1 Member Implementation Guide.
 
 ## Context and decisions
 
@@ -14,7 +14,7 @@ support shared transactions; do not introduce microservices or offline writes.
 
 The team confirmed Python 3.14 in a fresh Conda environment. M1's current runtime
 is standard-library only. Add Qt/FastAPI/SQLAlchemy/Alembic/driver packages when
-their Week 2 adapters are implemented and tested, not as unused dependencies now.
+their Sprint 2 adapters are implemented and tested, not as unused dependencies now.
 
 Entity is a non-dataclass behavior base. Subclasses declare `id: UUID` and use
 `eq=False` if dataclasses; equality is concrete type plus identity. Mutable and
@@ -37,7 +37,7 @@ state. Delivery is at least once, and hints contain no clinical narrative.
 Static import checks, strict types and contract tests protect module boundaries.
 In-memory copies prove deterministic rollback/state rules, not DB isolation.
 Real PostgreSQL constraints/version checks, transaction tests with two connections,
-server-side permissions and socket authorization remain required next week.
+server-side permissions and socket authorization are required in Sprint 2.
 
 No database account, provider project or backend host is invented/configured by
 this foundation. Provider/region, pilot currency/timezone, clinical correction

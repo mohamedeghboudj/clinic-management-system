@@ -1,7 +1,8 @@
 # Initial requirements baseline
 
 Status: derived from the project blueprint, pending Product Owner/clinic validation.
-The Week 1 model evidence and the remaining release checks appear below.
+The Sprint 1 model evidence and remaining release checks appear below. The
+[delivery plan](delivery.md) maps each remaining story to its issue and milestone.
 
 | Story | Outcome / acceptance | Feature owner |
 | --- | --- | --- |
@@ -30,7 +31,7 @@ advance patient credit, broad reports, patient portal and external services. The
 member-owned design notes do not constitute implemented features.
 
 
-## Week 1 increment verification
+## Sprint 1 increment verification
 
 Run `python -m scripts.demo_model` from the installed development checkout. The Windows and Ubuntu unit
 jobs run this command after the tests and coverage gate. The scenario uses
@@ -38,13 +39,13 @@ synthetic identities, a deterministic clock and memory transactions.
 
 | Stories | Executable evidence at the model checkpoint | Evidence due later |
 | --- | --- | --- |
-| S1â€“S2 | The demo registers a patient, checks an assigned doctor and a cashier, and denies a secretary's clinical write. People and access suites cover validation and denial paths. | Individual login, direct API authorization, clinic-unique numbers and paged remote search. |
+| S1–S2 | The demo registers a patient, checks an assigned doctor and a cashier, and denies a secretary's clinical write. People and access suites cover validation and denial paths. | Individual login, direct API authorization, clinic-unique numbers and paged remote search. |
 | S3 | A bookable room and an open time slot lead to check-in and completion. Scheduling contracts exercise adjacent intervals and early no-show rejection. | Two connections competing for the same doctor or room. |
 | S4 | The linked consultation is finalized and its prescription issued. The demo appends a correction while preserving its original entry. Clinical tests cover reconstruction and versioned saves. | Durable clinical history and direct endpoint authorization. |
-| S5â€“S6 | A 1,000 DZD invoice links to the visit. An authorized 400 DZD payment leaves 600 DZD outstanding. The demo rejects an excess payment and an invalid reversal. Billing tests cover immutable line snapshots. | Durable same-key replay and reconciliation after a lost response. |
-| S7â€“S8 | The memory transaction rolls back a rejected edit and preserves the committed payment, audit entry and outbox event. | Two workstations, reconnect, measured latency, installation and a timed remote restore. |
+| S5–S6 | A 1,000 DZD invoice links to the visit. An authorized 400 DZD payment leaves 600 DZD outstanding. The demo rejects an excess payment and an invalid reversal. Billing tests cover immutable line snapshots. | Durable same-key replay and reconciliation after a lost response. |
+| S7–S8 | The memory transaction rolls back a rejected edit and preserves the committed payment, audit entry and outbox event. | Two workstations, reconnect, measured latency, installation and a timed remote restore. |
 
 Product Owner validation, assigned human reviews and the release demonstration
-are separate acceptance records. The [Week 1 increment](https://app.notion.com/p/422016453ab08187ac1fca0617237c68)
+are separate acceptance records. The [Sprint 1 increment](https://app.notion.com/p/422016453ab08187ac1fca0617237c68)
 tracks team acceptance and [issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4)
 tracks integration review.

@@ -19,10 +19,11 @@ per module, falling back to statements for modules without branches. Ports have
 no artificial executed implementation. Review assertions against independent
 expected values rather than implementation-derived expectations.
 
-Both CI operating systems also run the [connected Week 1 demo](requirements.md#week-1-increment-verification).
+Both CI operating systems also run the [connected Sprint 1 demo](requirements.md#sprint-1-increment-verification).
 
-Week 2 remote tests use an isolated project/schema and two synchronized real
+Sprint 2 remote tests use an isolated project/schema and two synchronized real
 connections for overlap/payment races; memory fakes cannot establish SQL isolation,
 locking, durable idempotency or authorization. No destructive production tests.
-Week 3/4 add direct API/socket denials, reconnect/unknown outcome, two desktops,
-clean installer, representative latency run and an isolated remote restore drill.
+Sprint 2 also checks direct API and socket denials, reconnect after an unknown outcome,
+and two desktops. Sprint 3 verifies the clean installer, representative latency and
+an isolated remote restore. Record the environment and results with each increment.

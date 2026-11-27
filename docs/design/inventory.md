@@ -1,8 +1,8 @@
 # Inventory — Design Document
 
 **Module:** M3 — Facilities, Scheduling and Inventory Design  
-**Sprint:** Week 1  
-**Status:** Design only. No Python classes are implemented in Week 1.
+**Sprint:** Sprint 1
+**Status:** Design only. No Python classes are implemented in Sprint 1.
 
 > **All models in this document are proposed future design. Nothing here is implemented yet.**
 

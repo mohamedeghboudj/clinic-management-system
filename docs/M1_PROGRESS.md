@@ -11,7 +11,7 @@ with M2â€“M5.
 | Protected finalized consultation state and validated status/timestamp pairs on rehydration. Propagated the fix through the prescription and design branches. | [#15](https://github.com/mohamedeghboudj/clinic-management-system/pull/15), [#16](https://github.com/mohamedeghboudj/clinic-management-system/pull/16), [#17](https://github.com/mohamedeghboudj/clinic-management-system/pull/17) |
 | Repaired the scanner baseline and dependency check. Added a relocation test demonstrating that a new finding in the same file still fails the gate. | [#21](https://github.com/mohamedeghboudj/clinic-management-system/pull/21) |
 | Added clinic validation and failure-atomicity tests, diagnosed the hosted Windows timezone failure, and pinned the IANA data in the runtime and hash lock. | [#22](https://github.com/mohamedeghboudj/clinic-management-system/pull/22) |
-| Built the connected in-memory visit, added it to CI, reconciled S1â€“S8 with the sprint backlog, and rehearsed the squash sequence against main. | [Increment evidence](requirements.md#week-1-increment-verification) Â· [Integration issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4) |
+| Built the connected in-memory visit, added it to CI, reconciled S1â€“S8 with the sprint backlog, and rehearsed the squash sequence against main. | [Increment evidence](requirements.md#sprint-1-increment-verification) Â· [Integration issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4) |
 
 The combined Python 3.14.10 suite passed **794 tests with zero skips**. All five
 feature heads were included. The merge rehearsal applied #21, #22, #15, #16 and #17

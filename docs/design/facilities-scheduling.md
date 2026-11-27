@@ -1,7 +1,7 @@
 # Facilities and Scheduling — Design Document
 
 **Module:** M3 — Facilities, Scheduling and Inventory Design  
-**Sprint:** Week 1  
+**Sprint:** Sprint 1
 **Status:** Implemented (core models); future extensions noted below.
 
 ---
@@ -379,7 +379,7 @@ Python-level prechecks (`find_overlaps`) do **not** guarantee concurrency safety
 
 ---
 
-## 13. Future Extensions (Not Implemented in Week 1)
+## 13. Future Extensions (Not Implemented in Sprint 1)
 
 ### ResourceReservation
 A unified reservation model for doctors, rooms, and equipment that prevents cross-feature double-bookings by maintaining a single reservation table. Each reservation references a resource type, resource ID, and time slot. Conflict queries need only scan this table regardless of which feature created the reservation.
