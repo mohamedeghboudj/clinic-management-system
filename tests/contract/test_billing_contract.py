@@ -1,5 +1,7 @@
 """Independent M1 tests for M5's published contracts, pending M5 implementation."""
 
+from __future__ import annotations
+
 from collections.abc import Callable, Sequence
 from datetime import date, datetime
 from decimal import Decimal
