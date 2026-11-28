@@ -55,9 +55,9 @@ See [the story-by-story acceptance evidence](docs/requirements.md#sprint-1-incre
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `src/clinic_management/domain/shared/`                    | Identity, errors, event envelopes, money, time slots and contact values.    |
 | `src/clinic_management/domain/people/`, `access/`         | People and access profiles, membership and authorization.                                               |
-| `src/clinic_management/domain/facilities/`, `scheduling/` | Scheduling clinic resources and scheduling.                                                      |
+| `src/clinic_management/domain/facilities/`, `scheduling/` | Clinics, rooms, time slots and appointments.                                                      |
 | `src/clinic_management/domain/clinical/`                  | Clinical notes, prescriptions and service catalogue.                                           |
-| `src/clinic_management/domain/billing/`                   | Billing invoices and payment records.                                                         |
+| `src/clinic_management/domain/billing/`                   | Invoices, payments and reversals.                                                         |
 | `application/contracts/`, `application/ports/`            | Shared DTOs and feature repository ports.                          |
 | `infrastructure/`, `api/`, `desktop/`, `bootstrap/`       | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Sprint 1. |
 | `tests/support/`                                          | Deterministic clocks/IDs and single-threaded rollback/version fakes.                     |
@@ -66,7 +66,7 @@ See [the story-by-story acceptance evidence](docs/requirements.md#sprint-1-incre
 
 No domain module imports SQLAlchemy, FastAPI, Qt, application adapters or tests.
 Account roles are composed, not represented by empty Person subclasses. Preserve
-the public Foundation signatures in [the contract index](docs/contracts/foundation.md).
+the public foundation signatures in [the contract index](docs/contracts/foundation.md).
 
 ## GitHub workflow
 

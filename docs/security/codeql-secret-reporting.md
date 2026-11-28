@@ -14,8 +14,8 @@ the candidate's plaintext value.
 In pinned `detect-secrets==1.5.0`, `PotentialSecret.type` is the detector's
 classification string, `line_number` is location metadata and `filename` is the
 path. Actual candidate plaintext is stored separately as `secret_value`.
-The old reporting expression accessed metadata only. the assessment confirmed
-this is a false positive for logging the actual candidate value, caused by
+The old reporting expression accessed metadata only. The investigation identified
+a report that is a false positive for logging the actual candidate value, caused by
 conservative sensitivity propagation from the collection to its metadata.
 
 ## Change and verification
