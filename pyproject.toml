@@ -12,7 +12,8 @@ dynamic = ["dependencies"]
 
 [dependency-groups]
 dev = [
-    "build", "deptry", "detect-secrets", "mypy", "pip-audit", "pip-tools",
+    # Keep the Windows-only transitive requirement in locks resolved on Linux.
+    "build", "colorama", "deptry", "detect-secrets", "mypy", "pip-audit", "pip-tools",
     "pre-commit", "pylint", "pytest", "pytest-cov", "PyYAML", "ruff",
     "setuptools", "types-PyYAML",
 ]
