@@ -1,5 +1,6 @@
 # Generated from [dependency-groups].dev by scripts.requirements_input.
 # Edit pyproject.toml, regenerate this input, then compile the hash lock.
+-r requirements.txt
 build
 deptry
 detect-secrets
