@@ -48,3 +48,22 @@ def test_clean_workspace_passes_with_only_a_zero_count(
     output = capsys.readouterr()
     assert output.out == "Secret scan: 0 candidate(s)\n"
     assert output.err == ""
+
+
+def test_reviewed_enum_is_portable_and_new_findings_still_fail(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Match the reviewed enum in a relocated checkout and still detect new findings."""
+    relative = Path("src/clinic_management/domain/access/enums.py")
+    source = Path(__file__).resolve().parents[2] / relative
+    target = tmp_path / relative
+    target.parent.mkdir(parents=True)
+    target.write_bytes(source.read_bytes())
+    monkeypatch.chdir(tmp_path)
+    assert main() == 0
+    assert capsys.readouterr().out == "Secret scan: 0 candidate(s)\n"
+
+    with target.open("a", encoding="utf-8") as stream:
+        stream.write("\npassword" + " = " + repr("".join(("krypton", "cedar", "violet"))) + "\n")
+    assert main() == 1
+    assert capsys.readouterr().out == "Secret scan: 1 candidate(s)\n"
