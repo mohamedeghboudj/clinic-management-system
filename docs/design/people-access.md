@@ -1,7 +1,8 @@
 # People and Access Design
 
+**Hosted identity decision.** Sprint 2 uses Supabase Auth and resolves current membership on the Python backend. The local hash/session design below describes the original domain contract. See the [connected visit contract](../contracts/connected-visit.md) for the active adapter boundary.
+
 **Project:** Clinic Management System  
-**Owner:** M2  
 **Implementation phase:** Sprint 1
 **Status:** Design specification
 
@@ -18,7 +19,7 @@ The domain layer must remain independent of databases, HTTP frameworks, desktop 
 
 ## 2. Architectural responsibilities
 
-M2 is responsible for:
+Package responsibilities:
 
 - `domain/shared/`: Contact information, addresses, and shared validation utilities.
 - `domain/people/`: Person, patient, staff, doctor, and date-related models.
@@ -26,7 +27,7 @@ M2 is responsible for:
 - `application/ports/`: Password, identity, person, patient, staff, account, and session interfaces.
 - `application/contracts/`: People and authentication data-transfer objects.
 
-M2 must reuse shared foundation contracts provided by M1. In particular, M2 must not create duplicate implementations of `Entity` or `ValidationError`.
+Use the shared Entity and ValidationError types.
 
 ## 3. People domain
 
@@ -379,7 +380,7 @@ Requirements:
 - Audit entries are immutable and append-only.
 - Failed authentication may have an unknown actor.
 - Reason codes must be used instead of free clinical narrative.
-- The model must be compatible with M1's AuditWriter contract.
+- The model must be compatible with the foundation's AuditWriter contract.
 
 ### 5.2 Session
 The Session is an entity with an ID. It does not require a version
@@ -588,14 +589,14 @@ The following decisions require team agreement before final implementation:
 2. The convention for calculating birthdays on February 29 in non-leap years.
 3. The exact validation package and supported phone-number regions.
 4. The response strategy when required PatientSummary fields are not authorized.
-5. The agreed error contract and import path supplied by M1.
+5. The agreed error contract and import path supplied by Foundation.
 6. The final account and clinic-selection behavior.
 
 These decisions must not be silently assumed.
 
 ## 12. Acceptance criteria
 
-The M2 implementation is accepted when:
+The People and access implementation is accepted when:
 
 - All specified models and value objects exist.
 - Constructors validate local invariants.

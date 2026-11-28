@@ -2,7 +2,7 @@
 
 Status: foundation merged. The Sprint 1 model integration is under review.
 Date: 2026-11-01. Sources: supplied Sommerville ch. 5–7, 17, 24–25 and the
-project's Meeting and Delivery Blueprint / Sprint 1 Member Implementation Guide.
+project's delivery plan and domain specifications.
 
 ## Context and decisions
 
@@ -12,7 +12,7 @@ application contracts/ports, inward-dependent infrastructure/API, thin desktop,
 and explicit composition roots. One backend deployment and remote PostgreSQL
 support shared transactions; do not introduce microservices or offline writes.
 
-The team confirmed Python 3.14 in a fresh Conda environment. M1's current runtime
+The team confirmed Python 3.14 in a fresh Conda environment. The foundation runtime
 is standard-library only. Add Qt/FastAPI/SQLAlchemy/Alembic/driver packages when
 their Sprint 2 adapters are implemented and tested, not as unused dependencies now.
 
@@ -23,9 +23,7 @@ Value objects are immutable and equality-by-value. Shared models are not a
 reason to invent generic CRUD services or deep role inheritance.
 
 AuditWriter/UoW accept the approved read-only structural `AuditRecord` protocol,
-with M2's planned AuditEntry fields. This avoids importing or implementing M2's
-missing class. M2's immutable dataclass will satisfy the protocol naturally.
-The user explicitly approved this contract adjustment on 1 November.
+with immutable AuditEntry fields through structural typing.
 
 Domain methods change model state. Application use cases construct metadata
 events/audit and stage them alongside writes; a durable outbox delivers only

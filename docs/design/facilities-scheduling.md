@@ -1,6 +1,6 @@
 # Facilities and Scheduling — Design Document
 
-**Module:** M3 — Facilities, Scheduling and Inventory Design  
+**Module:** Facilities, Scheduling and Inventory Design
 **Sprint:** Sprint 1
 **Status:** Implemented (core models); future extensions noted below.
 
@@ -203,7 +203,7 @@ Cross-record conflict detection is the responsibility of the application use cas
 Clinic ──< Room
 Clinic ──< Appointment
 Appointment >── Patient   (by patient_id)
-Appointment >── Doctor    (by doctor_id — DoctorProfile from M2)
+Appointment >── Doctor    (by doctor_id — DoctorProfile from People and access)
 Appointment >── Room      (by room_id)
 Clinic       ── OpeningHours ──< OpeningPeriod
 ```

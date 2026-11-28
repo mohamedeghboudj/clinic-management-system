@@ -1,5 +1,7 @@
 # ADR 0002: Identity and Security
 
+**Hosted identity decision.** Sprint 2 uses Supabase Auth and resolves current membership on the Python backend. The local hash/session design below describes the original domain contract. See the [connected visit contract](../contracts/connected-visit.md) for the active adapter boundary.
+
 ## Status
 
 Proposed — pending team review and approval.
@@ -240,7 +242,7 @@ These decisions must be reviewed and approved by the team before being treated a
 
 ## References
 
-- Sprint 1 — Member Implementation Guide.
+- Project requirements and access design.
 - Clinic Management System Meeting and Delivery Blueprint.
 - docs/permissions.md.
 - docs/design/people-access.md.

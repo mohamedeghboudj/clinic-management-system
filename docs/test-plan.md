@@ -1,7 +1,6 @@
 # Foundation and handoff test plan
 
-M1 author verification is permitted by Mohamed but never relabelled independent.
-M2 must independently test M1; M3/M4 must review. M1's independent billing contracts run against M5's merged models.
+Record author verification and independent verification separately. Review the final head and run billing contracts against the actual models.
 
 | Area | Required failure/invariant evidence |
 | --- | --- |
@@ -14,7 +13,7 @@ M2 must independently test M1; M3/M4 must review. M1's independent billing contr
 | Logging/metrics | Drop arbitrary messages, exception values and private keys; rotation/config failures; finite durations and registered low-cardinality labels. |
 | Billing | Exact money/rounding, line snapshot immutability, 400/1000 partial payment, excess payment and reversal bounds; the integrated suite exercises the real models. |
 
-Coverage measures production modules and M1 test support. Enforce >=80% branches
+Coverage measures production modules and transaction test support. Enforce >=80% branches
 per module, falling back to statements for modules without branches. Ports have
 no artificial executed implementation. Review assertions against independent
 expected values rather than implementation-derived expectations.

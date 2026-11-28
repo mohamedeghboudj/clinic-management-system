@@ -21,7 +21,7 @@ their provider, restrict access and assess affected data before deleting evidenc
 - Secret scanning, dependency audits, CodeQL workflow and pinned new Actions.
 - Reviewed repository policy for two approvals, no force pushes, stale-review
   dismissal, code-owner review, read-only workflow tokens and push protection.
-  Actual activation is tracked in `docs/M1_PROGRESS.md`; a policy file alone
+  Actual activation can be verified using `docs/github-administration.md`; a policy file alone
   does not enforce settings.
 
 The retained Telegram workflow references `appleboy/telegram-action@master`.
@@ -31,7 +31,7 @@ requires its own reviewed task. No bot token/chat secret has been read or change
 
 ## Required before real deployment
 
-M2's server-side identity and per-request/record/field authorization; session
+the access module's server-side identity and per-request/record/field authorization; session
 revocation; immutable audit persistence; least-privilege database grants; actual
 remote concurrency tests; private attachments; tested backups/restoration; clinic
 retention/hosting policy; operational ownership and downtime procedures. No UI

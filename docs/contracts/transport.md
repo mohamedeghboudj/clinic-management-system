@@ -1,6 +1,6 @@
 # Transport design — Sprint 1 specification
 
-Status: DESIGN; no HTTP/GUI implementation. Later public endpoints use `/api/v1`.
+The [v1 workflow and route contract](connected-visit.md) fixes the public signatures. Implementations use the following encoding and security rules.
 
 UUIDs are canonical strings. Money is an amount decimal string plus explicit
 currency, never a binary float or locale-formatted number. Dates are ISO calendar

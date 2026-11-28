@@ -3,9 +3,7 @@
 Python desktop and modular backend project for clinic staff. The authoritative
 database will be remote PostgreSQL; Sprint 1 foundation commands use memory only.
 
-Sprint 1 joins five contributions in a synthetic clinic visit. M1 owns the foundation
-and integration, M2 people and access, M3 rooms and scheduling, M4 clinical
-records, and M5 billing. The default demo runs entirely in memory.
+The model demo connects registration, scheduling, clinical history and billing in memory.
 
 See the [delivery plan](docs/delivery.md) for the three increments, sprint deadlines,
 implementation issues and the condition for starting Sprint 2.
@@ -51,16 +49,16 @@ Run `python -m scripts.demo_model --foundation-only` to isolate transaction chec
 The default demo also verifies the clinical access denial, the 600 DZD balance and rollback.
 See [the story-by-story acceptance evidence](docs/requirements.md#sprint-1-increment-verification).
 
-## Structure and ownership
+## Package structure
 
-| Location                                                  | Purpose / owner                                                                          |
+| Location                                                  | Purpose                                                                          |
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `src/clinic_management/domain/shared/`                    | M1 identity, errors, event envelopes; M5 adds Money, M3 TimeSlot, M2 contact/address.    |
-| `src/clinic_management/domain/people/`, `access/`         | M2 profiles, membership and authorization.                                               |
-| `src/clinic_management/domain/facilities/`, `scheduling/` | M3 clinic resources and scheduling.                                                      |
-| `src/clinic_management/domain/clinical/`                  | M4 notes, prescriptions and service catalogue.                                           |
-| `src/clinic_management/domain/billing/`                   | M5 invoices and payment records.                                                         |
-| `application/contracts/`, `application/ports/`            | M1 shared DTOs/ports; each member adds their feature contracts.                          |
+| `src/clinic_management/domain/shared/`                    | Identity, errors, event envelopes, money, time slots and contact values.    |
+| `src/clinic_management/domain/people/`, `access/`         | People and access profiles, membership and authorization.                                               |
+| `src/clinic_management/domain/facilities/`, `scheduling/` | Scheduling clinic resources and scheduling.                                                      |
+| `src/clinic_management/domain/clinical/`                  | Clinical notes, prescriptions and service catalogue.                                           |
+| `src/clinic_management/domain/billing/`                   | Billing invoices and payment records.                                                         |
+| `application/contracts/`, `application/ports/`            | Shared DTOs and feature repository ports.                          |
 | `infrastructure/`, `api/`, `desktop/`, `bootstrap/`       | Inward-dependent adapters and composition roots; SQL/API/GUI integrations follow Sprint 1. |
 | `tests/support/`                                          | Deterministic clocks/IDs and single-threaded rollback/version fakes.                     |
 | `scripts/`                                                | Offline checks, Sprint 1 clinic demo and explicit GitHub policy administration.               |
@@ -68,17 +66,14 @@ See [the story-by-story acceptance evidence](docs/requirements.md#sprint-1-incre
 
 No domain module imports SQLAlchemy, FastAPI, Qt, application adapters or tests.
 Account roles are composed, not represented by empty Person subclasses. Preserve
-the public M1 signatures in [the contract index](docs/contracts/foundation.md).
+the public Foundation signatures in [the contract index](docs/contracts/foundation.md).
 
 ## GitHub workflow
 
 Use short-lived feature branches and PRs into `main`. Two
-assigned human approvals and independent testing remain mandatory. M2 is
-`@ahmed-ammiche`, M3 `@SamirKor`, M4 `@MohamedAmine-dash` and M5
-`@ayyoubbouchama`; all have verified write access. Never substitute
-the author, a bot or a fabricated reviewer for a missing teammate.
+assigned human approvals and independent testing remain mandatory.
 
-Your original `.github/workflows/telegram-notif.yml` is preserved byte-for-byte.
+The Telegram workflow publishes repository notifications.
 New workflows use pinned action commits, least-privilege tokens, timeouts and
 clean installs. See [GitHub administration](docs/github-administration.md) for
 the exact policy and the difference between prepared files and active settings.
@@ -95,5 +90,6 @@ while allowing normal author/tester commits and deletion after merge.
 - [Foundation signatures and compatibility](docs/contracts/foundation.md)
 - [Error codes](docs/contracts/error-codes.md)
 - [Recovery and operation runbook](docs/runbook.md)
-- [M1 completion and external dependencies](docs/M1_PROGRESS.md)
+- [Database design and ER model](docs/design/database.md)
+- [Connected visit API and Python contracts](docs/contracts/connected-visit.md)
 - [Security reporting and telemetry](SECURITY.md)

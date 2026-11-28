@@ -1,8 +1,7 @@
-﻿# Billing, Credit, Finance and Procurement Design Specification (M5)
+# Billing, Credit, Finance and Procurement Design Specification
 
-**Owner:** M5 (`@ayyoubbouchama`) · **Reviewers:** M2, M3 (`@SamirKor`) · **Independent Tester:** M1 (`@mohamedeghboudj`)
 
-This document specifies the Sprint 2+ application use cases, transport mappers, desktop formatting helpers, and the 14 deferred credit, financial reporting, and procurement domain models defined in Section 6 of the Sprint 1 Member Implementation Guide. No Python classes are created for DESIGN items in Sprint 1.
+This document specifies the Sprint 2+ application use cases, transport mappers, desktop formatting helpers, and the 14 deferred credit, financial reporting, and procurement domain models defined in the original billing design scope. No Python classes are created for DESIGN items in Sprint 1.
 
 ---
 
@@ -10,7 +9,7 @@ This document specifies the Sprint 2+ application use cases, transport mappers, 
 
 Before combining figures in clinic reports, the domain enforces four strict distinctions:
 
-1. **Received Stock Cost vs. Supplier Liability:** Receiving physical materials (`GoodsReceipt`) increases inventory asset value and records a movement in M3's `StockMovement` ledger, whereas recording a `SupplierInvoice` establishes an accounts-payable liability in `DZD`.
+1. **Received Stock Cost vs. Supplier Liability:** Receiving physical materials (`GoodsReceipt`) increases inventory asset value and records a movement in the scheduling module's `StockMovement` ledger, whereas recording a `SupplierInvoice` establishes an accounts-payable liability in `DZD`.
 2. **Supplier Liability vs. Expense Recognition:** Recording an operating `Expense` or a `SupplierInvoice` recognizes cost on an accrual basis (`incurred_on`), whereas settling that bill via `SupplierPayment` is a cash outflow (`paid_at`). An `Expense` linked to a `supplier_invoice_id` must never be double-counted alongside the settlement of that supplier invoice.
 3. **Billed Revenue vs. Cash Received:** Issuing a patient `Invoice` recognizes `billed_revenue`, whereas posting a `Payment` (minus `PaymentReversal`) records `cash_received` and reduces `receivables`.
 4. **Single Currency & Rounding Baseline:** All Sprint 1 calculations use `DZD` quantized to `0.01` with `ROUND_HALF_UP`. Line calculations follow `gross = quantize(quantity * unit_price)`, `subtotal = gross - discount_amount`, `tax = quantize(subtotal * tax_rate)`, and `total = subtotal + tax`.
@@ -74,7 +73,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* 200 DZD credit note on a 1,000 DZD unpaid invoice reduces outstanding balance to 800 DZD.
   - *Invalid:* 1,100 DZD credit note on a 1,000 DZD invoice raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-BILL-01](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Assigned to M5 billing team; depends on M5 `Invoice` and `BalanceSummary`).
+- **Future Backlog Item:** [ISSUE-S2-BILL-01](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Depends on `Invoice` and `BalanceSummary`).
 
 ### 3.2 `PatientCredit` (`domain/billing/patient_credit.py`)
 - **Purpose:** Track advance deposits or authorized overpayments held on a patient's clinic account prior to invoice allocation. (Sprint 1 rejects excess payments directly until this ledger is enabled.)
@@ -88,7 +87,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* 500 DZD credit with one 200 DZD allocation returns `available_amount == 300.00 DZD`.
   - *Invalid:* Zero or negative credit creation raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-BILL-02](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Assigned to M5 billing team; depends on M2 `Patient` and M5 `Payment`).
+- **Future Backlog Item:** [ISSUE-S2-BILL-02](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Depends on `Patient` and `Payment`).
 
 ### 3.3 `PaymentAllocation` (`domain/billing/payment_allocation.py`)
 - **Purpose:** Link a portion of a `PatientCredit` to settle debt on a specific `ISSUED` `Invoice`.
@@ -101,7 +100,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* Allocating 300 DZD from a 300 DZD credit to an invoice with 600 DZD due leaves 0 DZD credit and 300 DZD invoice debt.
   - *Invalid:* Allocating 400 DZD from a 300 DZD credit raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-BILL-03](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Assigned to M5 billing team; depends on `PatientCredit` and `Invoice`).
+- **Future Backlog Item:** [ISSUE-S2-BILL-03](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Depends on `PatientCredit` and `Invoice`).
 
 ### 3.4 `ExpenseCategory` (`domain/financial/enums.py`)
 - **Purpose:** Classify operational clinic expenditures using a controlled vocabulary.
@@ -113,7 +112,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* `ExpenseCategory.SUPPLIES`.
   - *Invalid:* `"MARKETING"` rejected by parser.
-- **Future Backlog Item:** [ISSUE-S2-FIN-01](https://github.com/mohamedeghboudj/clinic-management-system/issues/19) (Assigned to M5 finance team).
+- **Future Backlog Item:** [ISSUE-S2-FIN-01](https://github.com/mohamedeghboudj/clinic-management-system/issues/19).
 
 ### 3.5 `Expense` (`domain/financial/expense.py`)
 - **Purpose:** Record non-patient operational costs incurred by the clinic and track when they are paid.
@@ -127,7 +126,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* Recording a 50,000 DZD `RENT` expense incurred on `2026-11-01` and marking it paid on `2026-11-05`.
   - *Invalid:* Marking an already paid expense as paid again raises `InvalidTransitionError`.
-- **Future Backlog Item:** [ISSUE-S2-FIN-02](https://github.com/mohamedeghboudj/clinic-management-system/issues/19) (Assigned to M5 finance team; depends on `ExpenseCategory`, `Money`, `SupplierInvoice`).
+- **Future Backlog Item:** [ISSUE-S2-FIN-02](https://github.com/mohamedeghboudj/clinic-management-system/issues/19) (Depends on `ExpenseCategory`, `Money`, `SupplierInvoice`).
 
 ### 3.6 `FinancialSummary` (`domain/financial/summary.py`)
 - **Purpose:** Read-only reporting projection separating billed revenue, cash inflows, cash outflows, and outstanding receivables over a date interval.
@@ -141,7 +140,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* `cash_received = 120,000 DZD`, `cash_paid = 45,000 DZD` yields `net_cash() == 75,000.00 DZD`.
   - *Invalid:* `period_start = 2026-11-30`, `period_end = 2026-11-01` raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-FIN-03](https://github.com/mohamedeghboudj/clinic-management-system/issues/19) (Assigned to M5 finance team; depends on `Money`, `Invoice`, `Payment`, `Expense`, `SupplierPayment`).
+- **Future Backlog Item:** [ISSUE-S2-FIN-03](https://github.com/mohamedeghboudj/clinic-management-system/issues/19) (Depends on `Money`, `Invoice`, `Payment`, `Expense`, `SupplierPayment`).
 
 ### 3.7 `Supplier` (`domain/procurement/supplier.py`)
 - **Purpose:** Represent an external vendor supplying medical consumables or equipment to the clinic.
@@ -155,21 +154,21 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* Active supplier `"PharmAlliance DZ"` with `payment_terms_days=30`.
   - *Invalid:* `payment_terms_days=-5` raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-PROC-01](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Assigned to M5 procurement team; depends on M2 `ContactInfo` and `Address`).
+- **Future Backlog Item:** [ISSUE-S2-PROC-01](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Depends on `ContactInfo` and `Address`).
 
 ### 3.8 `PurchaseOrderLine` (`domain/procurement/purchase_order.py`)
-- **Purpose:** Immutable line item on a clinic purchase order referencing M3's `Material` catalogue.
+- **Purpose:** Immutable line item on a clinic purchase order referencing the scheduling module's `Material` catalogue.
 - **Proposed Fields & Signatures:**
   - Fields: `material_id: UUID`, `quantity: Decimal`, `unit: str`, `unit_cost: Money`.
   - Methods: `total(self) -> Money` (returns `unit_cost.multiply(quantity)`).
-- **Relationships, Cardinalities & Scope:** Owned by `PurchaseOrder` (`1..*`); references M3 `Material.id`.
+- **Relationships, Cardinalities & Scope:** Owned by `PurchaseOrder` (`1..*`); references `Material.id`.
 - **States & Transitions:** Frozen value object.
 - **Errors:** `ValidationError(code="INVALID_VALUE")` if `quantity <= 0`, `unit` is empty, or `unit_cost < 0`.
 - **Transaction, Concurrency & Security:** Persisted with parent `PurchaseOrder`.
 - **Examples:**
   - *Valid:* 10 boxes of examination gloves at `850.00 DZD` yields `total() == 8500.00 DZD`.
   - *Invalid:* `quantity = Decimal("0")` raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-PROC-02](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Assigned to M5 procurement team; depends on M3 `Material` and M5 `Money`).
+- **Future Backlog Item:** [ISSUE-S2-PROC-02](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Depends on `Material` and `Money`).
 
 ### 3.9 `PurchaseOrder` (`domain/procurement/purchase_order.py`)
 - **Purpose:** Track a clinic's formal order of materials from a `Supplier` and derive delivery progress across partial receipts.
@@ -183,20 +182,20 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* Sending a 2-line `DRAFT` order transitions status to `SENT` and sets `ordered_at`.
   - *Invalid:* Cancelling a `PARTIALLY_RECEIVED` order raises `InvalidTransitionError`.
-- **Future Backlog Item:** [ISSUE-S2-PROC-03](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Assigned to M5 procurement team; depends on `Supplier`, `PurchaseOrderLine`, `GoodsReceipt`).
+- **Future Backlog Item:** [ISSUE-S2-PROC-03](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Depends on `Supplier`, `PurchaseOrderLine`, `GoodsReceipt`).
 
 ### 3.10 `GoodsReceiptLine` (`domain/procurement/goods_receipt.py`)
 - **Purpose:** Record the exact quantity and optional batch/lot of a single material delivered in a shipment.
 - **Proposed Fields & Signatures:**
   - Fields: `material_id: UUID`, `quantity: Decimal`, `lot_id: UUID | None`.
-- **Relationships, Cardinalities & Scope:** Owned by `GoodsReceipt` (`1..*`); references M3 `Material` and optional `StockLot`.
+- **Relationships, Cardinalities & Scope:** Owned by `GoodsReceipt` (`1..*`); references `Material` and optional `StockLot`.
 - **States & Transitions:** Frozen value object.
 - **Errors:** `ValidationError(code="INVALID_VALUE")` if `quantity <= 0`.
-- **Transaction, Concurrency & Security:** Commits atomically with parent `GoodsReceipt` and M3 `StockMovement`.
+- **Transaction, Concurrency & Security:** Commits atomically with parent `GoodsReceipt` and `StockMovement`.
 - **Examples:**
   - *Valid:* Receiving `quantity = Decimal("5")` of `material_id` with `lot_id`.
   - *Invalid:* Negative or zero quantity raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-PROC-04](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Assigned to M5 procurement team; depends on M3 `Material` and `StockLot`).
+- **Future Backlog Item:** [ISSUE-S2-PROC-04](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Depends on `Material` and `StockLot`).
 
 ### 3.11 `GoodsReceipt` (`domain/procurement/goods_receipt.py`)
 - **Purpose:** Verify physical delivery against a `SENT` `PurchaseOrder` and trigger corresponding inventory stock receipt movements.
@@ -206,11 +205,11 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Relationships, Cardinalities & Scope:** `PurchaseOrder 1 ── 0..* GoodsReceipt`; scoped to `clinic_id`.
 - **States & Transitions:** Immutable posted receipt record.
 - **Errors:** `ValidationError(code="INVALID_VALUE")` if an unordered `material_id` appears or cumulative received quantity exceeds ordered quantity.
-- **Transaction, Concurrency & Security:** Locks `PurchaseOrder` in UoW; stages `GoodsReceipt` and M3 `StockMovement(kind="RECEIPT")` atomically.
+- **Transaction, Concurrency & Security:** Locks `PurchaseOrder` in UoW; stages `GoodsReceipt` and `StockMovement(kind="RECEIPT")` atomically.
 - **Examples:**
   - *Valid:* Two partial receipts of 5 units each against an order of 10 units succeed.
   - *Invalid:* A second receipt of 6 units against a 10-unit order (with 5 already received) raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-PROC-05](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Assigned to M5 procurement team; depends on `PurchaseOrder` and M3 `StockMovement`).
+- **Future Backlog Item:** [ISSUE-S2-PROC-05](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Depends on `PurchaseOrder` and `StockMovement`).
 
 ### 3.12 `SupplierInvoice` (`domain/procurement/supplier_invoice.py`)
 - **Purpose:** Record a bill issued by a supplier to the clinic and derive the remaining accounts-payable balance.
@@ -224,7 +223,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* 20,000 DZD supplier bill with one 8,000 DZD `SupplierPayment` returns `balance() == 12000.00 DZD`.
   - *Invalid:* Blank `supplier_number` raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-PROC-06](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Assigned to M5 procurement team; depends on `Supplier`, `PurchaseOrder`, `SupplierPayment`).
+- **Future Backlog Item:** [ISSUE-S2-PROC-06](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Depends on `Supplier`, `PurchaseOrder`, `SupplierPayment`).
 
 ### 3.13 `SupplierPayment` (`domain/procurement/supplier_payment.py`)
 - **Purpose:** Record an immutable cash outflow settling all or part of a `SupplierInvoice`.
@@ -237,7 +236,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* Paying 12,000 DZD on a 12,000 DZD remaining supplier invoice balance settles the bill to 0 DZD.
   - *Invalid:* Paying 12,001 DZD raises `ValidationError(code="PAYMENT_EXCEEDS_BALANCE")`.
-- **Future Backlog Item:** [ISSUE-S2-PROC-07](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Assigned to M5 procurement team; depends on `SupplierInvoice` and `Money`).
+- **Future Backlog Item:** [ISSUE-S2-PROC-07](https://github.com/mohamedeghboudj/clinic-management-system/issues/20) (Depends on `SupplierInvoice` and `Money`).
 
 ### 3.14 `PricingPolicy` (`application/ports/pricing.py`)
 - **Purpose:** Extension port for future clinic-specific or insurance-tier tax/discount calculation strategies when simple per-line rules are no longer sufficient.
@@ -250,7 +249,7 @@ The replay read intentionally uses a new READ COMMITTED statement snapshot. A fu
 - **Examples:**
   - *Valid:* Standard policy returns quantized `subtotal` plus applicable statutory tax.
   - *Invalid:* Policy returning `USD` for a `DZD` subtotal raises `ValidationError`.
-- **Future Backlog Item:** [ISSUE-S2-BILL-04](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Assigned to M5 billing team; depends on `Money`).
+- **Future Backlog Item:** [ISSUE-S2-BILL-04](https://github.com/mohamedeghboudj/clinic-management-system/issues/18) (Depends on `Money`).
 
 ---
 

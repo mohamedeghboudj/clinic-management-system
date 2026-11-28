@@ -12,15 +12,15 @@ The product goal is a staff-managed clinic visit across two workstations, with c
 
 Start from the verified Sprint 1 freeze on `main`. Publish shared contracts first so feature owners can work in parallel. See [requirements](requirements.md) for the S1–S8 acceptance criteria.
 
-| Owner | Deliverable and issue | Integration evidence |
+| Subsystem | Deliverable and issue | Integration evidence |
 | --- | --- | --- |
-| M1 | [Shared API, migrations and transactions #40](https://github.com/mohamedeghboudj/clinic-management-system/issues/40), [S7 two-client sync #47](https://github.com/mohamedeghboudj/clinic-management-system/issues/47) | Two protected sessions, rollback, stale update, reconnect and authorized refetch. |
-| M2 | [S1 staff access #41](https://github.com/mohamedeghboudj/clinic-management-system/issues/41), [S2 patients #42](https://github.com/mohamedeghboudj/clinic-management-system/issues/42) | Disabled and cross-clinic access denied, unique patient number, bounded search. |
-| M3 | [S3 booking and check-in #43](https://github.com/mohamedeghboudj/clinic-management-system/issues/43) | Two connections compete for a doctor or room. One booking succeeds. Adjacent bookings succeed. |
-| M4 | [S4 consultation and prescription #44](https://github.com/mohamedeghboudj/clinic-management-system/issues/44) | Assigned doctor finalizes, stale saves fail and amendments preserve the original note. |
-| M5 | [S5 invoice #45](https://github.com/mohamedeghboudj/clinic-management-system/issues/45), [S6 payment #46](https://github.com/mohamedeghboudj/clinic-management-system/issues/46) | Immutable service snapshots, concurrent retry yields one payment, lost acknowledgment reconciled. |
+| Foundation | [Shared API, migrations and transactions #40](https://github.com/mohamedeghboudj/clinic-management-system/issues/40), [S7 two-client sync #47](https://github.com/mohamedeghboudj/clinic-management-system/issues/47) | Two protected sessions, rollback, stale update, reconnect and authorized refetch. |
+| People and access | [S1 staff access #41](https://github.com/mohamedeghboudj/clinic-management-system/issues/41), [S2 patients #42](https://github.com/mohamedeghboudj/clinic-management-system/issues/42) | Disabled and cross-clinic access denied, unique patient number, bounded search. |
+| Scheduling | [S3 booking and check-in #43](https://github.com/mohamedeghboudj/clinic-management-system/issues/43) | Two connections compete for a doctor or room. One booking succeeds. Adjacent bookings succeed. |
+| Clinical | [S4 consultation and prescription #44](https://github.com/mohamedeghboudj/clinic-management-system/issues/44) | Assigned doctor finalizes, stale saves fail and amendments preserve the original note. |
+| Billing | [S5 invoice #45](https://github.com/mohamedeghboudj/clinic-management-system/issues/45), [S6 payment #46](https://github.com/mohamedeghboudj/clinic-management-system/issues/46) | Immutable service snapshots, concurrent retry yields one payment, lost acknowledgment reconciled. |
 
-M1 also coordinates [bounded adapter retries #2](https://github.com/mohamedeghboudj/clinic-management-system/issues/2) in Sprint 2 and non-sensitive [desktop preferences #3](https://github.com/mohamedeghboudj/clinic-management-system/issues/3) in Sprint 3. Test deadline exhaustion and lost acknowledgments during the connected visit. Verify preferences during clean installation.
+Foundation also coordinates [bounded adapter retries #2](https://github.com/mohamedeghboudj/clinic-management-system/issues/2) in Sprint 2 and non-sensitive [desktop preferences #3](https://github.com/mohamedeghboudj/clinic-management-system/issues/3) in Sprint 3. Test deadline exhaustion and lost acknowledgments during the connected visit. Verify preferences during clean installation.
 
 Proposed checkpoints are contracts at kickoff, remote smoke test, connected visit, two-client fault tests, then review on 3 December. Confirm remote development resources and backend hosting at kickoff. The planning baseline is Supabase Auth and hosted PostgreSQL behind the Python API. Keep database credentials on the server and restrict test environments to synthetic patients.
 

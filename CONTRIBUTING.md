@@ -1,4 +1,4 @@
-﻿# Contributing
+# Contributing
 
 Use the Python 3.14 Conda environment and run the README checks from the repository
 root. Runtime packages belong in pinned `requirements.txt`; direct developer
@@ -40,20 +40,7 @@ rerun checks. Squash-merge the reviewed PR, preserving contributor attribution.
 
 ## Review and independent verification
 
-| Author | Assigned reviewers | Independent test author |
-| --- | --- | --- |
-| M1 @mohamedeghboudj | M3 @SamirKor, M4 @MohamedAmine-dash | M2 @ahmed-ammiche |
-| M2 @ahmed-ammiche | M4 @MohamedAmine-dash, M5 @ayyoubbouchama | M3 @SamirKor |
-| M3 @SamirKor | M5 @ayyoubbouchama, M1 @mohamedeghboudj | M4 @MohamedAmine-dash |
-| M4 @MohamedAmine-dash | M1 @mohamedeghboudj, M2 @ahmed-ammiche | M5 @ayyoubbouchama |
-| M5 @ayyoubbouchama | M2 @ahmed-ammiche, M3 @SamirKor | M1 @mohamedeghboudj |
-
-Author verification is allowed but is labelled separately. Two non-author human
-approvals apply after final changes, including test changes. A reviewer merges.
-All four teammates have verified write access. M2 is the independent tester for M1, and M3/M4 are its assigned reviewers. CODEOWNERS maps
-the assigned pairs; GitHub requires only one matching owner's approval, so the
-second assigned approval must also be checked against the table above.
-Review requests may be assigned while a PR is draft; they are not approvals.
+Request an independent tester and the two reviewers assigned to the change. Record the tested commit and results on the PR. The current rotation is in the team workspace. CODEOWNERS routes review requests. Confirm both assigned approvals on the final head before squash merge.
 
 Active rulesets reject direct pushes to main, require current checks from the
 GitHub Actions app, and permit only squash PR merges into main. Main cannot be

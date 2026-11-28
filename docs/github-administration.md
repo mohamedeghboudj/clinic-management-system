@@ -2,9 +2,7 @@
 
 Repository: `mohamedeghboudj/clinic-management-system`, public, default branch main.
 Initial inspection found main unprotected and no rulesets; the policy below is
-now applied. Verified write access: M2 `ahmed-ammiche`, M3 `SamirKor`,
-M4 `MohamedAmine-dash`, M5 `ayyoubbouchama`. M2 independently tests M1; M3/M4
-are the assigned reviewers. Having access is not evidence of completed acceptance.
+now applied. Review requests are routed through CODEOWNERS. Check final approvals and independent verification on the PR.
 
 The original Telegram notification blob is preserved:
 `b81663a6e5b4611129f05367b7da406867fb4c06`. Its original filename, contents and
