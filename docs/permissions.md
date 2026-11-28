@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document describes the Week 1 permissions and access-control design for the Clinic Management System.
+This document describes the Sprint 1 permissions and access-control design for the Clinic Management System.
 
 The system must ensure that users can access only the clinics, actions, resources, and data fields they are authorized to access.
 
@@ -28,7 +28,7 @@ A user may have multiple roles within a clinic.
 
 ## 3. Permissions
 
-The Week 1 specification defines these permissions:
+The Sprint 1 specification defines these permissions:
 
 | Permission | Intended action |
 |---|---|
@@ -65,7 +65,7 @@ For example, doctor assignment must be resolved by the server using trusted data
 
 ## 5. Role-permission matrix
 
-The Week 1 specification lists the roles and permissions but does not provide a final mapping between them.
+The Sprint 1 specification lists the roles and permissions but does not provide a final mapping between them.
 
 Therefore, the default role-permission matrix remains **pending team approval**.
 
@@ -188,14 +188,14 @@ The system must not treat missing permissions, unknown grants, invalid scopes, o
 
 ## 14. Implementation boundary
 
-### Week 1
+### Sprint 1
 
 - Define roles, permissions, scopes, grants, and access-policy contracts.
 - Define account, membership, principal, resource-context, and session models.
 - Document security requirements and unresolved decisions.
 - Test policy behavior using independent tests and controlled in-memory data where appropriate.
 
-### Week 2 and later
+### Sprint 2 and later
 
 - Implement authentication and authorization use cases.
 - Implement the Argon2 password-hashing adapter.
@@ -203,7 +203,7 @@ The system must not treat missing permissions, unknown grants, invalid scopes, o
 - Integrate authorization with API endpoints.
 - Enforce clinic isolation and field-level filtering.
 
-No login endpoints, real token generation, database adapters, or desktop authentication screens are part of this Week 1 document.
+No login endpoints, real token generation, database adapters, or desktop authentication screens are part of this Sprint 1 document.
 
 ## 15. Decisions requiring team approval
 

@@ -1,8 +1,9 @@
 # People and Access Design
 
+**Hosted identity decision.** Sprint 2 uses Supabase Auth and resolves current membership on the Python backend. The local hash/session design below describes the original domain contract. See the [connected visit contract](../contracts/connected-visit.md) for the active adapter boundary.
+
 **Project:** Clinic Management System  
-**Owner:** M2  
-**Implementation phase:** Week 1  
+**Implementation phase:** Sprint 1
 **Status:** Design specification
 
 ## 1. Purpose
@@ -11,14 +12,14 @@ This document defines the design of the people, patient, staff, doctor, identity
 
 The implementation is divided into two stages:
 
-- **Week 1:** Domain models, validation utilities, application ports, contracts, tests, and documentation.
-- **Week 2:** Database adapters, authentication implementation, application use cases, and API integration.
+- **Sprint 1:** Domain models, validation utilities, application ports, contracts, tests, and documentation.
+- **Sprint 2:** Database adapters, authentication implementation, application use cases, and API integration.
 
 The domain layer must remain independent of databases, HTTP frameworks, desktop interfaces, and external services.
 
 ## 2. Architectural responsibilities
 
-M2 is responsible for:
+Package responsibilities:
 
 - `domain/shared/`: Contact information, addresses, and shared validation utilities.
 - `domain/people/`: Person, patient, staff, doctor, and date-related models.
@@ -26,7 +27,7 @@ M2 is responsible for:
 - `application/ports/`: Password, identity, person, patient, staff, account, and session interfaces.
 - `application/contracts/`: People and authentication data-transfer objects.
 
-M2 must reuse shared foundation contracts provided by M1. In particular, M2 must not create duplicate implementations of `Entity` or `ValidationError`.
+Use the shared Entity and ValidationError types.
 
 ## 3. People domain
 
@@ -379,11 +380,11 @@ Requirements:
 - Audit entries are immutable and append-only.
 - Failed authentication may have an unknown actor.
 - Reason codes must be used instead of free clinical narrative.
-- The model must be compatible with M1's AuditWriter contract.
+- The model must be compatible with the foundation's AuditWriter contract.
 
 ### 5.2 Session
 The Session is an entity with an ID. It does not require a version
-field under the Week 1 specification.
+field under the Sprint 1 specification.
 
 **Location:** `domain/access/session.py`
 
@@ -423,7 +424,7 @@ Requirements:
 
 Token fields must be excluded from representations and logs.
 
-No real token generation is implemented in Week 1.
+No real token generation is implemented in Sprint 1.
 
 ### 6.2 People contract
 
@@ -437,7 +438,7 @@ No real token generation is implemented in Week 1.
 - `phone: str | None`
 - `version: int`
 
-Actual database querying, joining, and mapping are Week 2 responsibilities.
+Actual database querying, joining, and mapping are Sprint 2 responsibilities.
 
 ### 6.3 PasswordHasher port
 
@@ -449,7 +450,7 @@ Methods:
 - `verify(self, password: str, encoded_hash: str) -> bool`
 - `needs_rehash(self, encoded_hash: str) -> bool`
 
-An Argon2 adapter will be implemented later. No cryptographic implementation or production fake is required in Week 1.
+An Argon2 adapter will be implemented later. No cryptographic implementation or production fake is required in Sprint 1.
 
 ### 6.4 IdentityProvider port
 
@@ -463,7 +464,7 @@ Methods:
 
 The contract must specify invalid credentials, expired sessions, disabled accounts, and revoked-session errors.
 
-No network implementation or actual login endpoint is implemented in Week 1.
+No network implementation or actual login endpoint is implemented in Sprint 1.
 
 ### 6.5 Repository ports
 
@@ -532,7 +533,7 @@ The server must:
 6. Return an authorized PatientSummary.
 7. Prevent duplicate requests from creating duplicate patients.
 
-No RegisterPatient service implementation is required in Week 1.
+No RegisterPatient service implementation is required in Sprint 1.
 
 ## 8. Response field authorization
 
@@ -588,14 +589,14 @@ The following decisions require team agreement before final implementation:
 2. The convention for calculating birthdays on February 29 in non-leap years.
 3. The exact validation package and supported phone-number regions.
 4. The response strategy when required PatientSummary fields are not authorized.
-5. The agreed error contract and import path supplied by M1.
+5. The agreed error contract and import path supplied by Foundation.
 6. The final account and clinic-selection behavior.
 
 These decisions must not be silently assumed.
 
 ## 12. Acceptance criteria
 
-The M2 implementation is accepted when:
+The People and access implementation is accepted when:
 
 - All specified models and value objects exist.
 - Constructors validate local invariants.
@@ -610,4 +611,4 @@ The M2 implementation is accepted when:
 - Independent unit tests cover successful and failure cases.
 - Documentation and tests agree with the implementation.
 
-**Implementation boundary:** Week 1 delivers domain models, ports, contracts, utilities, tests, and design documentation. Database adapters, HTTP endpoints, desktop screens, and real authentication integrations are deferred to Week 2.
+**Implementation boundary:** Sprint 1 delivers domain models, ports, contracts, utilities, tests, and design documentation. Database adapters, HTTP endpoints, desktop screens, and real authentication integrations are deferred to Sprint 2.

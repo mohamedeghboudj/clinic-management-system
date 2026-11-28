@@ -1,9 +1,6 @@
 # Operations and recovery runbook
 
-Status: foundation procedures and deployment design. No live service/database
-has been deployed; backend host, managed DB project/region and operational owners
-must be recorded before Week 2 connectivity work. Never invent production URLs,
-credentials or backup availability from a free-tier name.
+Before deploying the API, record the development project reference, backend host, region, roles and verified backup capability in the environment inventory. Use the provider dashboard or secret manager for credentials.
 
 ## Development startup
 
@@ -37,13 +34,13 @@ Operational logs rotate in a caller-selected local text/JSON location; they omit
 clinical text, secrets, arbitrary message arguments and exception values. Correlation
 IDs are restricted operational data, not metrics labels. Audit records are separate
 immutable access/business facts persisted with writes; real DB append-only grants,
-sensitive-read audit and mandatory audit failure policy remain M2/adapter work.
+sensitive-read audit and mandatory audit failure policy remain People and access/adapter work.
 
 Use operation/outcome counts, p50/p95 timings, pool wait, socket lag/reconnects,
 readiness/outage duration and backup age. Do not copy production records into an
 issue or developer fixture while diagnosing a failure.
 
-## Migration and release procedure — implement with persistence
+## Migration and release procedure â€” implement with persistence
 
 1. Record compatible code/API/schema range and obtain verified remote backup.
 2. Apply reviewed migrations once in an isolated remote staging database using a
@@ -55,10 +52,9 @@ issue or developer fixture while diagnosing a failure.
 5. If health fails, halt rollout; roll back code only to compatible schema, otherwise
    use the tested restore path. Never improvise destructive down-migrations.
 
-## Backups and remote restore drill — required in Week 4
+## Backups and remote restore drill â€” required in Sprint 3
 
-M1 coordinates automation/runbook; M2 checks restricted access/key separation;
-M3/M4/M5 reconcile restored scheduling/history/finance. Select a managed backup
+Verify restricted access and key separation. Reconcile restored schedules, clinical history and financial totals. Select a managed backup
 capability or remote job; verify actual plan features. Daily and pre-migration
 encrypted backups need off-project retention, backup-age/failure alerts and keys
 stored separately. Attachment objects/provider auth may require separate backup.
@@ -74,3 +70,15 @@ Initial demo objectives from the blueprint are recovery point <=24h and recovery
 time <=2h; these are unmeasured targets, not guarantees. The clinic must approve
 acceptable real data-loss/outage limits. A JSONL portability export with snapshot,
 schema/version/checksum manifest is not a complete database/provider backup.
+
+
+## Development connection handoff
+
+Obtain the project URL and enabled publishable key from Supabase Project Settings → API Keys.
+Only these public values belong in desktop configuration. For the backend, open **Connect** in the
+project dashboard. Select the direct or session-pooler connection for the deployment network and
+use the project CA with verified TLS. The console connection string contains a password placeholder.
+The MCP project-creation response does not return the administrator password. An administrator
+sets or resets it in Database Settings and stores it in the deployment secret manager. Rotation is
+an explicit operation. Create separate migration and restricted runtime credentials before running
+the first migration, then verify a synthetic read using the runtime identity.

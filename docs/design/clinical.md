@@ -1,8 +1,7 @@
 # Clinical Care Module — Design Specification
 
-**Author:** M4 (Clinical Care Lead)  
-**Sprint:** Sprint 1 — Week 1 Design Deliverable  
-**Status:** DESIGN ONLY — Specification for future increments. No production Python classes are created for these models in Week 1.
+**Sprint:** Sprint 1 design deliverable
+**Status:** DESIGN ONLY — Specification for future increments. No production Python classes are created for these models in Sprint 1.
 
 ---
 
@@ -10,7 +9,7 @@
 
 The clinical care domain manages the patient's medical records, consultations, prescriptions, amendments, treatment plans, allergies, laboratory workflows, and surgical procedures.
 
-In Sprint 1 (Week 1), core consultation finalization, immutable record entries, amendments, written prescriptions, and billable service items are **built** as pure Python domain models. The remaining models detailed below are **designed** for implementation in subsequent increments.
+In Sprint 1, core consultation finalization, immutable record entries, amendments, written prescriptions, and billable service items are **built** as pure Python domain models. The remaining models detailed below are **designed** for implementation in subsequent increments.
 
 All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolation. Access requires an authenticated `Principal` with verified doctor-patient care assignment (`Permission.CLINICAL_READ`, `Permission.CLINICAL_WRITE`, or `Permission.PRESCRIBE`). Business ownership alone never grants access to clinical narratives.
 
@@ -42,7 +41,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Querying page 1 (limit 25) of clinical entries for patient `P-101` returns 12 summaries with continuation cursor `None`.
   * *Invalid:* Requesting page with limit 150 raises `ValidationError(code="INVALID_VALUE", message_key="paging.limit.invalid")`.
-* **Future Issue / Dependency:** Issue [#32](https://github.com/mohamedeghboudj/clinic-management-system/issues/32) (Week 2 Query Service), depends on M2 `Patient` and M1 `PageRequest`.
+* **Future Issue / Dependency:** Issue [#32](https://github.com/mohamedeghboudj/clinic-management-system/issues/32) (Query Service), depends on `Patient` and `PageRequest`.
 
 ---
 
@@ -78,7 +77,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Doctor records active Penicillin allergy with reaction "Severe rash".
   * *Invalid:* Attempting to reactivate an allergy that was marked `ENTERED_IN_ERROR` raises `InvalidTransitionError`.
-* **Future Issue / Dependency:** Issue [#33](https://github.com/mohamedeghboudj/clinic-management-system/issues/33) (Sprint 2 Clinical Safety), depends on M2 `DoctorProfile`.
+* **Future Issue / Dependency:** Issue [#33](https://github.com/mohamedeghboudj/clinic-management-system/issues/33) (Clinical Safety), depends on `DoctorProfile`.
 
 ---
 
@@ -113,7 +112,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Doctor completes 3-month hypertension management plan on `2026-11-01`.
   * *Invalid:* Attempting to complete a plan with `ended_on` before `started_on` raises `ValidationError`.
-* **Future Issue / Dependency:** Issue [#34](https://github.com/mohamedeghboudj/clinic-management-system/issues/34) (Sprint 2 Care Plans), depends on M2 `DoctorProfile`.
+* **Future Issue / Dependency:** Issue [#34](https://github.com/mohamedeghboudj/clinic-management-system/issues/34) (Care Plans), depends on `DoctorProfile`.
 
 ---
 
@@ -149,7 +148,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Clean PDF attachment of 2.4 MB with SHA-256 digest verified.
   * *Invalid:* Uploading a file of 75 MB raises `ValidationError(code="INVALID_VALUE", message_key="attachment.size_exceeded")`.
-* **Future Issue / Dependency:** Issue [#35](https://github.com/mohamedeghboudj/clinic-management-system/issues/35) (Sprint 3 Storage Adapter), depends on Cloud Storage S3 bucket integration.
+* **Future Issue / Dependency:** Issue [#35](https://github.com/mohamedeghboudj/clinic-management-system/issues/35) (Storage Adapter), depends on Cloud Storage S3 bucket integration.
 
 ---
 
@@ -177,7 +176,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Procedure `"PROC-SUT-01"` ("Wound Suture") linked to catalog item with price 3,500 DZD.
   * *Invalid:* Creating procedure with blank code raises `ValidationError`.
-* **Future Issue / Dependency:** Issue [#36](https://github.com/mohamedeghboudj/clinic-management-system/issues/36) (Sprint 2 Operating Room / Procedures), depends on `ServiceCatalogItem`.
+* **Future Issue / Dependency:** Issue [#36](https://github.com/mohamedeghboudj/clinic-management-system/issues/36) (Operating Room / Procedures), depends on `ServiceCatalogItem`.
 
 ---
 
@@ -195,7 +194,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
     * `procedure_id: UUID`
     * `lead_doctor_id: UUID`
     * `team: tuple[SurgeryTeamMember, ...]`
-    * `reservation_ids: tuple[UUID, ...]` (Unified M3 doctor/operating-room/equipment reservations)
+    * `reservation_ids: tuple[UUID, ...]` (Unified Scheduling doctor/operating-room/equipment reservations)
     * `status: str` (`"PLANNED"`, `"IN_PROGRESS"`, `"COMPLETED"`, `"CANCELLED"`)
 * **Proposed Operations:**
   * `start(self, *, at: datetime) -> None`: Moves from `PLANNED` to `IN_PROGRESS`.
@@ -205,7 +204,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
   * `Patient 1 ── * Surgery`
   * `Surgery 1 ── 1 ProcedureType`
   * `Surgery 1 ── 1..* SurgeryTeamMember`
-  * `Surgery 1 ── 1..* ResourceReservation` (M3 unified reservations)
+  * `Surgery 1 ── 1..* ResourceReservation` (Scheduling unified reservations)
 * **Allowed States & Transitions:**
   * `PLANNED → IN_PROGRESS → COMPLETED`
   * `PLANNED → CANCELLED`
@@ -215,7 +214,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
   * `ConflictError(code="RESOURCE_CONFLICT", message_key="surgery.room_unavailable")`
 * **Concurrency, Transactions & Security:**
   * Atomic transaction releases or claims doctor, room, and equipment reservations together with surgical state.
-  * **Surgery Reservation Lock Ordering Protocol:** To eliminate distributed deadlocks across service boundaries when claiming or cancelling multi-resource reservations in M3, locks MUST be acquired in strict deterministic hierarchical order:
+  * **Surgery Reservation Lock Ordering Protocol:** To eliminate distributed deadlocks across service boundaries when claiming or cancelling multi-resource reservations in Scheduling, locks MUST be acquired in strict deterministic hierarchical order:
     1. **Doctor Availability Lock:** Verify and lock lead surgeon and clinical team availability.
     2. **Operating Room Lock:** Lock the specific operating room / theatre asset.
     3. **Equipment Lock:** Lock high-value surgical machinery / specialized instrument kits in lexicographical order of `equipment_id`.
@@ -223,7 +222,7 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Appendectomy with lead surgeon, anesthesiologist, and scrub nurse transitioning `PLANNED` → `IN_PROGRESS` → `COMPLETED`.
   * *Invalid:* Attempting to start a surgery that has already been cancelled raises `InvalidTransitionError`.
-* **Future Issue / Dependency:** Issue [#37](https://github.com/mohamedeghboudj/clinic-management-system/issues/37) (Sprint 3 Inpatient & Surgery), depends on M3 `ResourceReservation`.
+* **Future Issue / Dependency:** Issue [#37](https://github.com/mohamedeghboudj/clinic-management-system/issues/37) (Inpatient & Surgery), depends on `ResourceReservation`.
 
 ---
 
@@ -264,13 +263,13 @@ All clinical facts are strictly scoped to a `clinic_id` to enforce tenant isolat
 * **Examples:**
   * *Normal:* Fasting blood glucose ordered, collected, resulted at `5.8 mmol/L` (reference `3.9 - 6.1`), and validated.
   * *Invalid:* Marking an order collected without items raises `ValidationError`.
-* **Future Issue / Dependency:** Issue [#38](https://github.com/mohamedeghboudj/clinic-management-system/issues/38) (Sprint 3 Laboratory Orders).
+* **Future Issue / Dependency:** Issue [#38](https://github.com/mohamedeghboudj/clinic-management-system/issues/38) (Laboratory Orders).
 
 ---
 
 ## 3. Future Application Use-Case Contracts
 
-These command and query boundaries will be implemented in Week 2 under `application/clinical/`:
+These command and query boundaries will be implemented in Sprint 2 under `application/clinical/`:
 
 ### 3.1 FinalizeConsultation
 
@@ -370,7 +369,7 @@ class ConsultationDetail:
 
 ## 4. Traceability Matrix
 
-| Requirement / Blueprint Outcome | Domain Model (Week 1) | Design Spec (Week 1) | Target Use Case (Week 2) |
+| Requirement / Blueprint Outcome | Domain Model (Sprint 1) | Design Spec (Sprint 1) | Target use case (future items remain in the backlog) |
 |---|---|---|---|
 | S4: Doctor records draft consultation and finalizes it | `Consultation`, `validation.py` | Section 3.1 | `FinalizeConsultation` |
 | S4: Finalized content amended without rewriting history | `ClinicalEntry`, `ClinicalAmendment` | Section 2.1 | `AmendClinicalEntry` |
@@ -383,26 +382,17 @@ class ConsultationDetail:
 
 ## 5. Deferred Backlog Tracking & Issue Mapping
 
-Deferred clinical components and integration requirements are mapped to project backlog issues and milestones:
+Issues #32–#38 remain in the product backlog. Sprint 2 selects only the clinical visit and prescription scope in [#44](https://github.com/mohamedeghboudj/clinic-management-system/issues/44).
 
-| Backlog Tracker | Scope & Milestone | Key Design Invariants & Dependencies |
+| Backlog Tracker | Backlog scope | Key Design Invariants & Dependencies |
 |---|---|---|
-| [#32 (CLIN-01)](https://github.com/mohamedeghboudj/clinic-management-system/issues/32) | Sprint 2: MedicalRecord & History Query Service | Clinic-scoped SQL queries (`WHERE clinic_id = :clinic_id`), forward cursor pagination (`recorded_at DESC, id DESC`), narrative omission in `ClinicalEntrySummary`. |
-| [#33 (CLIN-02)](https://github.com/mohamedeghboudj/clinic-management-system/issues/33) | Sprint 2: Allergy Safety & Clinical Alerts | Active/resolved status lifecycle, `ENTERED_IN_ERROR` audit tombstone, pre-prescribing cross-check with M4 `PrescriptionItem`. |
-| [#34 (CLIN-03)](https://github.com/mohamedeghboudj/clinic-management-system/issues/34) | Sprint 2: Treatment Plans & Goal Tracking | `ended_on >= started_on` date invariants, doctor authorization for completion/cancellation. |
-| [#35 (CLIN-04)](https://github.com/mohamedeghboudj/clinic-management-system/issues/35) | Sprint 3: Cloud Binary Attachments Adapter | S3/Supabase presigned URL TTL <= 15 minutes, SHA-256 integrity validation, quarantine state machine (`PENDING` -> `CLEAN`/`INFECTED`). |
-| [#36 (CLIN-05)](https://github.com/mohamedeghboudj/clinic-management-system/issues/36) | Sprint 2: Operating Room & Minor Procedures | Procedural catalog code uniqueness per clinic, M4 `ServiceCatalogItem` billing linkage. |
-| [#37 (CLIN-06)](https://github.com/mohamedeghboudj/clinic-management-system/issues/37) | Sprint 3: Surgery Scheduling & Team Orchestration | Deterministic reservation lock ordering (Doctor -> Operating Room -> Equipment) across M3 boundary, deadlock-free rollback on conflict. |
-| [#38 (CLIN-07)](https://github.com/mohamedeghboudj/clinic-management-system/issues/38) | Sprint 3: Laboratory Orders & Result Amendments | Distinct technician entry and clinician validation roles, immutable lab result correction audit trails via `LabResultAmendment`. |
-| [Issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4) | Cross-functional Clinic Integration Handoff | Coordinates integration of M4 clinical aggregates with M1 Unit of Work outbox events, M2 permissions, and M3 appointments. |
+| [#32 (CLIN-01)](https://github.com/mohamedeghboudj/clinic-management-system/issues/32) | MedicalRecord & History Query Service | Clinic-scoped SQL queries (`WHERE clinic_id = :clinic_id`), forward cursor pagination (`recorded_at DESC, id DESC`), narrative omission in `ClinicalEntrySummary`. |
+| [#33 (CLIN-02)](https://github.com/mohamedeghboudj/clinic-management-system/issues/33) | Allergy Safety & Clinical Alerts | Active/resolved status lifecycle, `ENTERED_IN_ERROR` audit tombstone, pre-prescribing cross-check with `PrescriptionItem`. |
+| [#34 (CLIN-03)](https://github.com/mohamedeghboudj/clinic-management-system/issues/34) | Treatment Plans & Goal Tracking | `ended_on >= started_on` date invariants, doctor authorization for completion/cancellation. |
+| [#35 (CLIN-04)](https://github.com/mohamedeghboudj/clinic-management-system/issues/35) | Cloud Binary Attachments Adapter | S3/Supabase presigned URL TTL <= 15 minutes, SHA-256 integrity validation, quarantine state machine (`PENDING` -> `CLEAN`/`INFECTED`). |
+| [#36 (CLIN-05)](https://github.com/mohamedeghboudj/clinic-management-system/issues/36) | Operating Room & Minor Procedures | Procedural catalog code uniqueness per clinic, `ServiceCatalogItem` billing linkage. |
+| [#37 (CLIN-06)](https://github.com/mohamedeghboudj/clinic-management-system/issues/37) | Surgery Scheduling & Team Orchestration | Deterministic reservation lock ordering (Doctor -> Operating Room -> Equipment) across Scheduling boundary, deadlock-free rollback on conflict. |
+| [#38 (CLIN-07)](https://github.com/mohamedeghboudj/clinic-management-system/issues/38) | Laboratory Orders & Result Amendments | Distinct technician entry and clinician validation roles, immutable lab result correction audit trails via `LabResultAmendment`. |
+| [Issue #4](https://github.com/mohamedeghboudj/clinic-management-system/issues/4) | Cross-functional Clinic Integration Handoff | Coordinates integration of Clinical clinical aggregates with Foundation Unit of Work outbox events, People and access permissions, and Scheduling appointments. |
 
 ---
-
-## 6. Cross-PR Contract Verification Evidence (PR #17 ↔ PR #22)
-
-The 11 scheduling contract tests defined in `tests/contract/test_scheduling_contract.py` (authored by M4 in PR #17 at commit `03c5eae`) evaluate the facilities and scheduling domain contracts implemented by M3 in PR #22:
-
-| Evaluation Run | Tested Revisions | Result | Verification Notes |
-|---|---|---|---|
-| Review Baseline | PR #17 (`03c5eae`) against PR #22 (`85f6179`) | 10 passed, 1 failed | Successfully reproduced the early no-show timing defect: `Appointment.mark_no_show(at=...)` allowed marking an appointment as `NO_SHOW` before `slot.end` (e.g. at 09:30 for a 09:00–10:00 slot). Assertion was preserved per review instructions. |
-| Verification Retest | PR #17 (`03c5eae`) against PR #22 (`033e071`) | **11 passed, 0 failed** | Verified defect resolution: M3 enforced `at < self.slot.end` check raising `ValidationError`. All 11 scheduling and facilities contracts (`TimeSlot` intervals, `Appointment` state machine, `Room` bookability) pass cleanly. |

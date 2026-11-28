@@ -1,5 +1,7 @@
 # ADR 0002: Identity and Security
 
+**Hosted identity decision.** Sprint 2 uses Supabase Auth and resolves current membership on the Python backend. The local hash/session design below describes the original domain contract. See the [connected visit contract](../contracts/connected-visit.md) for the active adapter boundary.
+
 ## Status
 
 Proposed — pending team review and approval.
@@ -104,7 +106,7 @@ The application defines a PasswordHasher port with these operations:
 
 An Argon2 adapter is planned for the infrastructure implementation.
 
-The concrete cryptographic implementation is outside the Week 1 domain-model work.
+The concrete cryptographic implementation is outside the Sprint 1 domain-model work.
 
 ### Consequences
 
@@ -171,9 +173,9 @@ Failed authentication may have no known actor.
 - Audit records can be correlated across application operations.
 - Audit records must not expose passwords, raw tokens, or unnecessary clinical information.
 
-## Decision 8: Separation of Week 1 and later implementation
+## Decision 8: Separation of Sprint 1 and later implementation
 
-Week 1 defines the domain models, application ports, contracts, security rules, and tests.
+Sprint 1 defines the domain models, application ports, contracts, security rules, and tests.
 
 Later implementation work will provide:
 
@@ -185,7 +187,7 @@ Later implementation work will provide:
 - API authentication and authorization integration.
 - Desktop authentication screens.
 
-No real token generation, login endpoints, or database authentication adapters are introduced as part of this Week 1 decision.
+No real token generation, login endpoints, or database authentication adapters are introduced as part of this Sprint 1 decision.
 
 ## Alternatives considered
 
@@ -240,7 +242,7 @@ These decisions must be reviewed and approved by the team before being treated a
 
 ## References
 
-- Week 1 — Member Implementation Guide.
+- Project requirements and access design.
 - Clinic Management System Meeting and Delivery Blueprint.
 - docs/permissions.md.
 - docs/design/people-access.md.

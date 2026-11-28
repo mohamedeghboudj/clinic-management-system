@@ -1,6 +1,6 @@
 # Foundation contract index
 
-Python baseline: 3.14, confirmed by Mohamed. No import-time environment reads,
+Python baseline: 3.14. No import-time environment reads,
 network calls, global database sessions or production imports from test support.
 Use explicit mappings, injected clock/IDs and safe failure categories.
 
@@ -8,7 +8,7 @@ Use explicit mappings, injected clock/IDs and safe failure categories.
 | --- | --- | --- |
 | Identity equality | `domain.shared.entity` | `Entity.id: UUID`, `same_identity(other)`, equality by concrete type and ID; no hash. |
 | Error categories | `domain.shared.errors` | `ClinicError(code=..., message_key=..., safe_details=...)` and documented subclasses. |
-| Update hints | `domain.shared.events` | Frozen DomainEvent fields/types from the member guide; uppercase allowlisted event names, aware UTC, nonnegative version. |
+| Update hints | `domain.shared.events` | Frozen DomainEvent metadata fields defined in domain.shared.events; uppercase allowlisted event names, aware UTC, nonnegative version. |
 | Paging | `application.contracts.paging` | `PageRequest(limit=25, cursor=None)`, frozen `Page[T](items=tuple(...), next_cursor=...)`, `has_next()`. |
 | Health | `application.contracts.health`, `ports.health` | RuntimeState/HealthStatus enums, ComponentHealth, `HealthCheck.check()`. |
 | Clock/IDs | `application.ports.clock`, `identity` | `Clock.now() -> datetime`, `IdGenerator.new_id() -> UUID`; standard-library adapters in infrastructure. |
@@ -19,11 +19,11 @@ Use explicit mappings, injected clock/IDs and safe failure categories.
 
 ## Audit compatibility approved on 1 November
 
-M2's AuditEntry remains M2's implementation. It must expose: `id`, `clinic_id`,
+The access domain’s AuditEntry exposes: `id`, `clinic_id`,
 `actor_id`, `action`, `resource_type`, `resource_id`, `outcome`, `occurred_at`,
 `correlation_id`, `reason_code`, with the types in `AuditRecord`. The protocol's
 readonly properties accept frozen dataclass fields without subclassing it.
-M1 supplies an `AuditFixture` only in test support, not a substitute account or
+The suite provides an `AuditFixture` only in test support, not a substitute account or
 clinical access implementation. Typed Protocol assignment examples are verified.
 
 ## Transaction behavior

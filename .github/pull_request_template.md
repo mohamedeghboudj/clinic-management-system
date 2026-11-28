@@ -9,7 +9,7 @@ List changed fields/signatures, affected members and dependency PRs.
 ## Verification
 
 - Author verification commands/results:
-- Independent test author and evidence (see CONTRIBUTING.md for the named rotation):
+- Independent test author and evidence (see the team workspace for the current rotation):
 - Boundary, error, permission and state-transition cases:
 - Remote integration evidence when persistence is involved:
 
@@ -18,8 +18,7 @@ List changed fields/signatures, affected members and dependency PRs.
 - [ ] Typed functions and Google docstrings; maintained Python files <=500 lines.
 - [ ] CI checks, secret scan, dependency checks and coverage pass.
 - [ ] Independent tests are present; author verification is not independent evidence.
-- [ ] Both assigned non-author reviewers in CONTRIBUTING.md approve the final changes.
-- [ ] For M1: independent tests by @ahmed-ammiche; reviews by @SamirKor and @MohamedAmine-dash.
+- [ ] Both assigned non-author reviewers approve the final changes.
 - [ ] Docs, contracts and dependencies updated; no secrets or real patient data.
 - [ ] Any unavailable dependency or design-only behavior is stated explicitly.
 

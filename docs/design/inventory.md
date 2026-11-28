@@ -1,8 +1,8 @@
 # Inventory — Design Document
 
-**Module:** M3 — Facilities, Scheduling and Inventory Design  
-**Sprint:** Week 1  
-**Status:** Design only. No Python classes are implemented in Week 1.
+**Module:** Facilities, Scheduling and Inventory Design
+**Sprint:** Sprint 1
+**Status:** Design only. No Python classes are implemented in Sprint 1.
 
 > **All models in this document are proposed future design. Nothing here is implemented yet.**
 
@@ -164,11 +164,11 @@ class StockRepository(abc.ABC):
 
 ### Reorder Thresholds
 - When `balance < reorder_level`, a `LowStockDetected` event is raised.
-- The procurement workflow (M5) subscribes to this event to initiate a purchase order.
+- The procurement workflow (Billing) subscribes to this event to initiate a purchase order.
 - The reorder level is configurable per material per clinic.
 
-### Future Integration with M5 (Billing and Procurement)
-- When materials are received via a supplier purchase order (M5), a `StockMovement(kind=RECEIPT)` must be created automatically.
+### Future Integration with Billing (Billing and Procurement)
+- When materials are received via a supplier purchase order (Billing), a `StockMovement(kind=RECEIPT)` must be created automatically.
 - The `source_id` on the movement references the purchase order ID.
 - Cost per unit at time of receipt should be recorded for COGS (cost of goods sold) reporting.
 - Drug costs tied to consultations or procedures must reference both the material lot and the clinical event.

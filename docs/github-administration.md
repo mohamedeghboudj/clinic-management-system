@@ -2,9 +2,7 @@
 
 Repository: `mohamedeghboudj/clinic-management-system`, public, default branch main.
 Initial inspection found main unprotected and no rulesets; the policy below is
-now applied. Verified write access: M2 `ahmed-ammiche`, M3 `SamirKor`,
-M4 `MohamedAmine-dash`, M5 `ayyoubbouchama`. M2 independently tests M1; M3/M4
-are the assigned reviewers. Having access is not evidence of completed acceptance.
+now applied. Review requests are routed through CODEOWNERS. Check final approvals and independent verification on the PR.
 
 The original Telegram notification blob is preserved:
 `b81663a6e5b4611129f05367b7da406867fb4c06`. Its original filename, contents and
@@ -44,14 +42,9 @@ verifies enforcement, targets, bypass lists, rule types and parameters from GitH
 
 CODEOWNERS names eligible review pairs; GitHub's two-approval plus code-owner rules
 do not require both specific people automatically. Check the named rotation in
-CONTRIBUTING.md before merging. GitHub reads CODEOWNERS from the PR's base branch:
-until #5 lands, it is not yet available on main, so verify the assigned M3/M4 pair
-manually for that first PR. The two-approval rule is already active.
-
-The three stacked foundation PRs keep their existing bases and draft status.
-Independent tests and assigned reviews remain mandatory for each; merge #5,
-retarget #6 to main, then repeat for #7. Normal working-branch pushes are necessary
-for M2 to add tests; no PR-only restriction is applied to those source branches.
+CONTRIBUTING.md before merging. GitHub reads CODEOWNERS from the base branch. Foundation PRs #5, #6 and #7
+have merged. For each subsequent squash merge, update the next branch from current
+main, rerun checks and verify the assigned approvals on the resulting revision.
 
 The GitHub plugin supports contents/PR work but exposes no administration-write
 tool. Local SSH authentication is unavailable; public HTTPS fetch works. An

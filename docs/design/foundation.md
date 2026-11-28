@@ -31,10 +31,3 @@ Invalid preference files can fall back to documented non-sensitive UI defaults.
 Consumers: desktop bootstrap/views. Store no patient cache, clinical drafts,
 passwords, tokens or database URL. A future encrypted offline clinical feature
 needs separate retention/conflict/key design; JSON preferences are not a database.
-
-## Ownership and dependencies
-
-M2 implements Person/access/AuditEntry, M3 TimeSlot/scheduling, M4 clinical/catalogue,
-M5 Money/billing. M1's synthetic probes are infrastructure fixtures only. The full
-clinic demo and independent M5 contracts cannot establish behavior before those
-models exist. Keep explicit pending integration rather than placeholder features.
